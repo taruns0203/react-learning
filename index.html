@@ -1,0 +1,1786 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FAANG React Interview Prep</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg-primary: #0a0a0f;
+        --bg-secondary: #12121a;
+        --bg-tertiary: #1a1a24;
+        --bg-hover: #22222e;
+        --text-primary: #f0f0f5;
+        --text-secondary: #9090a0;
+        --text-muted: #606070;
+        --accent-blue: #3b82f6;
+        --accent-purple: #8b5cf6;
+        --accent-green: #10b981;
+        --accent-yellow: #f59e0b;
+        --accent-red: #ef4444;
+        --accent-pink: #ec4899;
+        --accent-cyan: #06b6d4;
+        --border-color: #2a2a3a;
+        --gradient-1: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+        --gradient-2: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
+        --shadow-glow: 0 0 60px rgba(59, 130, 246, 0.15);
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Plus Jakarta Sans", sans-serif;
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+
+      /* Background Effects */
+      .bg-grid {
+        position: fixed;
+        inset: 0;
+        background-image: linear-gradient(
+            rgba(59, 130, 246, 0.03) 1px,
+            transparent 1px
+          ),
+          linear-gradient(90deg, rgba(59, 130, 246, 0.03) 1px, transparent 1px);
+        background-size: 50px 50px;
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      .bg-glow {
+        position: fixed;
+        width: 600px;
+        height: 600px;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle,
+          rgba(59, 130, 246, 0.1) 0%,
+          transparent 70%
+        );
+        top: -200px;
+        right: -200px;
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      /* Layout */
+      .app {
+        display: flex;
+        min-height: 100vh;
+        position: relative;
+        z-index: 1;
+      }
+
+      /* Sidebar */
+      .sidebar {
+        width: 280px;
+        background: var(--bg-secondary);
+        border-right: 1px solid var(--border-color);
+        padding: 24px 0;
+        position: fixed;
+        height: 100vh;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .sidebar::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .sidebar::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      .sidebar::-webkit-scrollbar-thumb {
+        background: var(--border-color);
+        border-radius: 3px;
+      }
+
+      .logo {
+        padding: 0 24px 24px;
+        border-bottom: 1px solid var(--border-color);
+        margin-bottom: 16px;
+      }
+
+      .logo h1 {
+        font-size: 20px;
+        font-weight: 800;
+        background: var(--gradient-1);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        letter-spacing: -0.5px;
+      }
+
+      .logo p {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-top: 4px;
+      }
+
+      .progress-bar {
+        margin: 0 24px 24px;
+        padding: 16px;
+        background: var(--bg-tertiary);
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+      }
+
+      .progress-bar-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+
+      .progress-bar-header span {
+        font-size: 12px;
+        color: var(--text-secondary);
+      }
+
+      .progress-bar-header strong {
+        font-size: 14px;
+        color: var(--accent-green);
+        font-family: "JetBrains Mono", monospace;
+      }
+
+      .progress-track {
+        height: 6px;
+        background: var(--bg-primary);
+        border-radius: 3px;
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: var(--gradient-2);
+        border-radius: 3px;
+        transition: width 0.5s ease;
+      }
+
+      .nav-section {
+        padding: 8px 12px;
+      }
+
+      .nav-section-title {
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        color: var(--text-muted);
+        padding: 8px 12px;
+        margin-bottom: 4px;
+      }
+
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 13px;
+        color: var(--text-secondary);
+        position: relative;
+      }
+
+      .nav-item:hover {
+        background: var(--bg-hover);
+        color: var(--text-primary);
+      }
+
+      .nav-item.active {
+        background: rgba(59, 130, 246, 0.1);
+        color: var(--accent-blue);
+      }
+
+      .nav-item-icon {
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+      }
+
+      .nav-item-count {
+        margin-left: auto;
+        font-size: 11px;
+        font-family: "JetBrains Mono", monospace;
+        color: var(--text-muted);
+        background: var(--bg-primary);
+        padding: 2px 8px;
+        border-radius: 10px;
+      }
+
+      /* Main Content */
+      .main {
+        flex: 1;
+        margin-left: 280px;
+        padding: 32px 48px;
+        max-width: 1200px;
+      }
+
+      .header {
+        margin-bottom: 40px;
+      }
+
+      .header-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 24px;
+      }
+
+      .header h2 {
+        font-size: 32px;
+        font-weight: 800;
+        letter-spacing: -1px;
+        margin-bottom: 8px;
+      }
+
+      .header p {
+        color: var(--text-secondary);
+        font-size: 15px;
+      }
+
+      .search-box {
+        position: relative;
+      }
+
+      .search-box input {
+        width: 280px;
+        padding: 12px 16px 12px 44px;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        color: var(--text-primary);
+        font-size: 14px;
+        font-family: inherit;
+        transition: all 0.2s ease;
+      }
+
+      .search-box input:focus {
+        outline: none;
+        border-color: var(--accent-blue);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      }
+
+      .search-box input::placeholder {
+        color: var(--text-muted);
+      }
+
+      .search-box::before {
+        content: "⌕";
+        position: absolute;
+        left: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        font-size: 16px;
+      }
+
+      /* Category Grid */
+      .categories-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+        gap: 20px;
+      }
+
+      .category-card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 24px;
+        transition: all 0.3s ease;
+      }
+
+      .category-card:hover {
+        border-color: var(--accent-blue);
+        box-shadow: var(--shadow-glow);
+        transform: translateY(-2px);
+      }
+
+      .category-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+
+      .category-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+      }
+
+      .category-title {
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: -0.3px;
+      }
+
+      .category-count {
+        margin-left: auto;
+        font-size: 12px;
+        font-family: "JetBrains Mono", monospace;
+        color: var(--text-muted);
+      }
+
+      .topics-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .topic-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        background: var(--bg-tertiary);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: 1px solid transparent;
+      }
+
+      .topic-item:hover {
+        background: var(--bg-hover);
+        border-color: var(--border-color);
+      }
+
+      .topic-item.completed {
+        opacity: 0.6;
+      }
+
+      .topic-item.completed .topic-checkbox {
+        background: var(--accent-green);
+        border-color: var(--accent-green);
+      }
+
+      .topic-item.completed .topic-checkbox::after {
+        content: "✓";
+        color: white;
+        font-size: 10px;
+      }
+
+      .topic-checkbox {
+        width: 18px;
+        height: 18px;
+        border: 2px solid var(--border-color);
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        transition: all 0.2s ease;
+      }
+
+      .topic-name {
+        font-size: 13px;
+        color: var(--text-secondary);
+        flex: 1;
+      }
+
+      .topic-item:hover .topic-name {
+        color: var(--text-primary);
+      }
+
+      .topic-difficulty {
+        font-size: 10px;
+        font-weight: 600;
+        padding: 3px 8px;
+        border-radius: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .topic-difficulty.easy {
+        background: rgba(16, 185, 129, 0.15);
+        color: var(--accent-green);
+      }
+
+      .topic-difficulty.medium {
+        background: rgba(245, 158, 11, 0.15);
+        color: var(--accent-yellow);
+      }
+
+      .topic-difficulty.hard {
+        background: rgba(239, 68, 68, 0.15);
+        color: var(--accent-red);
+      }
+
+      /* Modal */
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(8px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+      }
+
+      .modal-overlay.active {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .modal {
+        width: 90%;
+        max-width: 900px;
+        max-height: 90vh;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 20px;
+        overflow: hidden;
+        transform: scale(0.9) translateY(20px);
+        transition: all 0.3s ease;
+      }
+
+      .modal-overlay.active .modal {
+        transform: scale(1) translateY(0);
+      }
+
+      .modal-header {
+        padding: 24px 28px;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: var(--bg-tertiary);
+      }
+
+      .modal-header h3 {
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: -0.3px;
+      }
+
+      .modal-header p {
+        font-size: 13px;
+        color: var(--text-secondary);
+        margin-top: 4px;
+      }
+
+      .modal-close {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        background: var(--bg-secondary);
+        color: var(--text-secondary);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        transition: all 0.2s ease;
+      }
+
+      .modal-close:hover {
+        background: var(--bg-hover);
+        color: var(--text-primary);
+      }
+
+      .modal-body {
+        padding: 28px;
+        max-height: calc(90vh - 180px);
+        overflow-y: auto;
+      }
+
+      .modal-body::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .modal-body::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      .modal-body::-webkit-scrollbar-thumb {
+        background: var(--border-color);
+        border-radius: 3px;
+      }
+
+      .prompt-section {
+        margin-bottom: 24px;
+      }
+
+      .prompt-section h4 {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--accent-blue);
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .prompt-box {
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 20px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12px;
+        line-height: 1.7;
+        color: var(--text-secondary);
+        white-space: pre-wrap;
+        max-height: 400px;
+        overflow-y: auto;
+      }
+
+      .modal-footer {
+        padding: 20px 28px;
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+        background: var(--bg-tertiary);
+      }
+
+      .btn {
+        padding: 12px 24px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 600;
+        font-family: inherit;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .btn-primary {
+        background: var(--gradient-1);
+        border: none;
+        color: white;
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+      }
+
+      .btn-secondary {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+      }
+
+      .btn-secondary:hover {
+        background: var(--bg-hover);
+      }
+
+      .btn-success {
+        background: var(--accent-green);
+        border: none;
+        color: white;
+      }
+
+      /* Toast Notification */
+      .toast {
+        position: fixed;
+        bottom: 32px;
+        right: 32px;
+        background: var(--bg-secondary);
+        border: 1px solid var(--accent-green);
+        padding: 16px 24px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        z-index: 1001;
+        transform: translateY(100px);
+        opacity: 0;
+        transition: all 0.3s ease;
+      }
+
+      .toast.show {
+        transform: translateY(0);
+        opacity: 1;
+      }
+
+      .toast-icon {
+        width: 24px;
+        height: 24px;
+        background: var(--accent-green);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 12px;
+      }
+
+      /* Phase Badge */
+      .phase-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 16px;
+      }
+
+      .phase-badge.foundation {
+        background: rgba(16, 185, 129, 0.15);
+        color: var(--accent-green);
+      }
+
+      .phase-badge.intermediate {
+        background: rgba(245, 158, 11, 0.15);
+        color: var(--accent-yellow);
+      }
+
+      .phase-badge.advanced {
+        background: rgba(239, 68, 68, 0.15);
+        color: var(--accent-red);
+      }
+
+      .phase-badge.interview {
+        background: rgba(139, 92, 246, 0.15);
+        color: var(--accent-purple);
+      }
+
+      /* Week indicator */
+      .week-indicator {
+        font-size: 11px;
+        color: var(--text-muted);
+        font-family: "JetBrains Mono", monospace;
+      }
+
+      /* Responsive */
+      @media (max-width: 1024px) {
+        .sidebar {
+          width: 240px;
+        }
+        .main {
+          margin-left: 240px;
+          padding: 24px 32px;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .sidebar {
+          transform: translateX(-100%);
+          z-index: 100;
+        }
+        .sidebar.open {
+          transform: translateX(0);
+        }
+        .main {
+          margin-left: 0;
+          padding: 20px;
+        }
+        .categories-grid {
+          grid-template-columns: 1fr;
+        }
+        .header-top {
+          flex-direction: column;
+          gap: 16px;
+        }
+        .search-box input {
+          width: 100%;
+        }
+      }
+
+      /* Color coding for category icons */
+      .cat-react {
+        background: linear-gradient(135deg, #61dafb22, #61dafb44);
+        color: #61dafb;
+      }
+      .cat-hooks {
+        background: linear-gradient(135deg, #8b5cf622, #8b5cf644);
+        color: #8b5cf6;
+      }
+      .cat-patterns {
+        background: linear-gradient(135deg, #f59e0b22, #f59e0b44);
+        color: #f59e0b;
+      }
+      .cat-state {
+        background: linear-gradient(135deg, #10b98122, #10b98144);
+        color: #10b981;
+      }
+      .cat-forms {
+        background: linear-gradient(135deg, #ec489922, #ec489944);
+        color: #ec4899;
+      }
+      .cat-perf {
+        background: linear-gradient(135deg, #ef444422, #ef444444);
+        color: #ef4444;
+      }
+      .cat-data {
+        background: linear-gradient(135deg, #06b6d422, #06b6d444);
+        color: #06b6d4;
+      }
+      .cat-system {
+        background: linear-gradient(135deg, #3b82f622, #3b82f644);
+        color: #3b82f6;
+      }
+      .cat-testing {
+        background: linear-gradient(135deg, #84cc1622, #84cc1644);
+        color: #84cc16;
+      }
+      .cat-machine {
+        background: linear-gradient(135deg, #f9731622, #f9731644);
+        color: #f97316;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="bg-grid"></div>
+    <div class="bg-glow"></div>
+
+    <div class="app">
+      <aside class="sidebar">
+        <div class="logo">
+          <h1>⚛️ React Prep</h1>
+          <p>16-Week FAANG Interview Plan</p>
+        </div>
+
+        <div class="progress-bar">
+          <div class="progress-bar-header">
+            <span>Progress</span>
+            <strong id="progress-text">0 / 112</strong>
+          </div>
+          <div class="progress-track">
+            <div
+              class="progress-fill"
+              id="progress-fill"
+              style="width: 0%"
+            ></div>
+          </div>
+        </div>
+
+        <nav class="nav-section">
+          <div class="nav-section-title">Phases</div>
+          <div class="nav-item active" data-filter="all">
+            <span class="nav-item-icon">📚</span>
+            All Topics
+            <span class="nav-item-count" id="all-count">112</span>
+          </div>
+          <div class="nav-item" data-filter="foundation">
+            <span class="nav-item-icon">🌱</span>
+            Foundation
+            <span class="nav-item-count">28</span>
+          </div>
+          <div class="nav-item" data-filter="intermediate">
+            <span class="nav-item-icon">🚀</span>
+            Intermediate
+            <span class="nav-item-count">28</span>
+          </div>
+          <div class="nav-item" data-filter="advanced">
+            <span class="nav-item-icon">⚡</span>
+            Advanced
+            <span class="nav-item-count">28</span>
+          </div>
+          <div class="nav-item" data-filter="interview">
+            <span class="nav-item-icon">🎯</span>
+            Interview Ready
+            <span class="nav-item-count">28</span>
+          </div>
+        </nav>
+
+        <nav class="nav-section">
+          <div class="nav-section-title">Quick Filters</div>
+          <div class="nav-item" data-filter="learning">
+            <span class="nav-item-icon">📖</span>
+            Learning Days
+          </div>
+          <div class="nav-item" data-filter="coding">
+            <span class="nav-item-icon">💻</span>
+            Machine Coding
+          </div>
+          <div class="nav-item" data-filter="completed">
+            <span class="nav-item-icon">✅</span>
+            Completed
+            <span class="nav-item-count" id="completed-count">0</span>
+          </div>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <header class="header">
+          <div class="header-top">
+            <div>
+              <h2>Topic Library</h2>
+              <p>Click any topic to get a comprehensive learning prompt</p>
+            </div>
+            <div class="search-box">
+              <input
+                type="text"
+                id="search-input"
+                placeholder="Search topics..."
+              />
+            </div>
+          </div>
+        </header>
+
+        <div class="categories-grid" id="categories-container">
+          <!-- Categories will be injected here -->
+        </div>
+      </main>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="modal-overlay">
+      <div class="modal">
+        <div class="modal-header">
+          <div>
+            <h3 id="modal-title">Topic Title</h3>
+            <p id="modal-subtitle">Category • Week X</p>
+          </div>
+          <button class="modal-close" id="modal-close">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="prompt-section">
+            <h4>📋 Learning Prompt</h4>
+            <div class="prompt-box" id="prompt-content"></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="mark-complete-btn">
+            <span>✓</span> Mark Complete
+          </button>
+          <button class="btn btn-primary" id="copy-btn">
+            <span>📋</span> Copy Prompt
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">
+      <div class="toast-icon">✓</div>
+      <span id="toast-message">Copied to clipboard!</span>
+    </div>
+
+    <script>
+      // Topic Data
+      const categories = [
+        {
+          id: "react-core",
+          name: "React Core",
+          icon: "⚛️",
+          colorClass: "cat-react",
+          phase: "foundation",
+          week: 1,
+          topics: [
+            {
+              id: "rendering-model",
+              name: "React's Rendering Model",
+              difficulty: "medium",
+              prompt:
+                "React's rendering model and the render cycle (trigger, render, commit phases)",
+              link: "./react-guide/index.html",
+            },
+            {
+              id: "reconciliation",
+              name: "Reconciliation & Diffing",
+              difficulty: "medium",
+              prompt:
+                "React Reconciliation algorithm, diffing heuristics, and why keys matter",
+            },
+            {
+              id: "fiber",
+              name: "Fiber Architecture",
+              difficulty: "hard",
+              prompt:
+                "React Fiber architecture - why it exists, how it works, and practical implications",
+            },
+            {
+              id: "composition",
+              name: "Component Composition",
+              difficulty: "easy",
+              prompt:
+                "Component composition patterns - children prop, slots, compound components",
+            },
+            {
+              id: "controlled",
+              name: "Controlled vs Uncontrolled",
+              difficulty: "medium",
+              prompt:
+                "Controlled vs Uncontrolled components - when to use each and common pitfalls",
+            },
+          ],
+        },
+        {
+          id: "hooks",
+          name: "Hooks",
+          icon: "🪝",
+          colorClass: "cat-hooks",
+          phase: "foundation",
+          week: 2,
+          topics: [
+            {
+              id: "usestate",
+              name: "useState Deep Dive",
+              difficulty: "medium",
+              prompt:
+                "useState hook internals - functional updates, lazy initialization, batching, and common pitfalls",
+            },
+            {
+              id: "useeffect",
+              name: "useEffect Mastery",
+              difficulty: "hard",
+              prompt:
+                "useEffect hook - synchronization mental model, dependency array, cleanup functions, and race conditions",
+            },
+            {
+              id: "usememo",
+              name: "useMemo & useCallback",
+              difficulty: "medium",
+              prompt:
+                "useMemo and useCallback - when to use, when NOT to use, and referential equality",
+            },
+            {
+              id: "useref",
+              name: "useRef & forwardRef",
+              difficulty: "medium",
+              prompt:
+                "useRef hook - DOM refs, mutable containers, forwardRef, and useImperativeHandle",
+            },
+            {
+              id: "custom-hooks",
+              name: "Custom Hooks",
+              difficulty: "medium",
+              prompt:
+                "Creating custom hooks - patterns, best practices, and common custom hooks (useDebounce, useFetch, useLocalStorage)",
+            },
+            {
+              id: "uselayouteffect",
+              name: "useLayoutEffect",
+              difficulty: "medium",
+              prompt:
+                "useLayoutEffect vs useEffect - when to use each and measuring DOM",
+            },
+            {
+              id: "usereducer",
+              name: "useReducer",
+              difficulty: "medium",
+              prompt:
+                "useReducer hook - complex state, actions, reducers, and when to use over useState",
+            },
+          ],
+        },
+        {
+          id: "state-management",
+          name: "State Management",
+          icon: "🗃️",
+          colorClass: "cat-state",
+          phase: "foundation",
+          week: 3,
+          topics: [
+            {
+              id: "context-api",
+              name: "Context API Deep Dive",
+              difficulty: "medium",
+              prompt:
+                "React Context API - Provider pattern, useContext, and when to use Context",
+            },
+            {
+              id: "context-perf",
+              name: "Context Performance",
+              difficulty: "hard",
+              prompt:
+                "Context performance pitfalls - re-render issues, splitting contexts, and optimization strategies",
+            },
+            {
+              id: "state-colocation",
+              name: "State Colocation",
+              difficulty: "easy",
+              prompt:
+                "State colocation and lifting state - where state should live and derived state patterns",
+            },
+            {
+              id: "global-state",
+              name: "Global State Patterns",
+              difficulty: "medium",
+              prompt:
+                "Global state management patterns - when to use Context vs external libraries, and trade-offs",
+            },
+          ],
+        },
+        {
+          id: "patterns",
+          name: "Design Patterns",
+          icon: "🏗️",
+          colorClass: "cat-patterns",
+          phase: "intermediate",
+          week: 5,
+          topics: [
+            {
+              id: "compound",
+              name: "Compound Components",
+              difficulty: "hard",
+              prompt:
+                "Compound Components pattern - implicit state sharing, flexible APIs, and implementation",
+            },
+            {
+              id: "render-props",
+              name: "Render Props",
+              difficulty: "medium",
+              prompt:
+                "Render Props pattern - function as child, inversion of control, and when to use",
+            },
+            {
+              id: "hoc",
+              name: "Higher-Order Components",
+              difficulty: "medium",
+              prompt:
+                "HOC pattern - when still useful, composition, prop forwarding, and displayName",
+            },
+            {
+              id: "provider",
+              name: "Provider Pattern",
+              difficulty: "medium",
+              prompt:
+                "Provider pattern - nested providers, provider composition, and dependency injection",
+            },
+            {
+              id: "polymorphic",
+              name: "Polymorphic Components",
+              difficulty: "hard",
+              prompt:
+                "Polymorphic components - as prop pattern, TypeScript considerations, and flexibility",
+            },
+          ],
+        },
+        {
+          id: "error-handling",
+          name: "Error Handling",
+          icon: "🛡️",
+          colorClass: "cat-patterns",
+          phase: "foundation",
+          week: 4,
+          topics: [
+            {
+              id: "error-boundaries",
+              name: "Error Boundaries",
+              difficulty: "medium",
+              prompt:
+                "Error Boundaries - getDerivedStateFromError, componentDidCatch, fallback UI, and why no hooks version",
+            },
+            {
+              id: "suspense",
+              name: "Suspense Fundamentals",
+              difficulty: "medium",
+              prompt:
+                "React Suspense - lazy loading, fallback UI, React.lazy, and data fetching with Suspense",
+            },
+            {
+              id: "error-patterns",
+              name: "Error Handling Patterns",
+              difficulty: "medium",
+              prompt:
+                "Error handling patterns in React - try-catch in event handlers, error states, and recovery strategies",
+            },
+          ],
+        },
+        {
+          id: "forms",
+          name: "Forms & Validation",
+          icon: "📝",
+          colorClass: "cat-forms",
+          phase: "intermediate",
+          week: 6,
+          topics: [
+            {
+              id: "form-state",
+              name: "Form State Management",
+              difficulty: "medium",
+              prompt:
+                "Form state management strategies - controlled forms, form libraries concepts, and state design",
+            },
+            {
+              id: "validation",
+              name: "Validation Approaches",
+              difficulty: "medium",
+              prompt:
+                "Form validation - field-level vs form-level, async validation, and error display patterns",
+            },
+            {
+              id: "complex-forms",
+              name: "Complex Form Patterns",
+              difficulty: "hard",
+              prompt:
+                "Complex form patterns - dynamic fields, array fields, nested objects, and wizard forms",
+            },
+            {
+              id: "form-perf",
+              name: "Form Performance",
+              difficulty: "medium",
+              prompt:
+                "Form performance optimization - avoiding re-renders, field isolation, touched/dirty state",
+            },
+            {
+              id: "accessible-forms",
+              name: "Accessible Forms",
+              difficulty: "medium",
+              prompt:
+                "Accessible forms in React - labels, error messages, focus management, and ARIA",
+            },
+          ],
+        },
+        {
+          id: "lists-performance",
+          name: "Lists & Performance",
+          icon: "📊",
+          colorClass: "cat-perf",
+          phase: "intermediate",
+          week: 7,
+          topics: [
+            {
+              id: "large-lists",
+              name: "Rendering Large Lists",
+              difficulty: "medium",
+              prompt:
+                "Rendering large lists in React - performance issues, React.memo, and key optimization",
+            },
+            {
+              id: "virtualization",
+              name: "Virtualization Concepts",
+              difficulty: "hard",
+              prompt:
+                "List virtualization - windowing concept, visible items only, scroll handling, and implementation",
+            },
+            {
+              id: "infinite-scroll",
+              name: "Infinite Scroll",
+              difficulty: "medium",
+              prompt:
+                "Infinite scroll patterns - Intersection Observer, pagination, cursor-based loading",
+            },
+            {
+              id: "list-optimization",
+              name: "List Optimization",
+              difficulty: "medium",
+              prompt:
+                "List performance optimization - memoization strategies, stable keys, and batch updates",
+            },
+          ],
+        },
+        {
+          id: "data-fetching",
+          name: "Data Fetching",
+          icon: "🔄",
+          colorClass: "cat-data",
+          phase: "intermediate",
+          week: 8,
+          topics: [
+            {
+              id: "fetch-strategies",
+              name: "Data Fetching Strategies",
+              difficulty: "medium",
+              prompt:
+                "Data fetching strategies in React - fetch on mount, on event, prefetching, and race conditions",
+            },
+            {
+              id: "caching",
+              name: "Caching Patterns",
+              difficulty: "hard",
+              prompt:
+                "Client-side caching patterns - stale-while-revalidate, cache invalidation, and normalization",
+            },
+            {
+              id: "optimistic",
+              name: "Optimistic Updates",
+              difficulty: "medium",
+              prompt:
+                "Optimistic updates - immediate UI update, rollback on error, and user experience",
+            },
+            {
+              id: "realtime",
+              name: "Real-time Data",
+              difficulty: "hard",
+              prompt:
+                "Real-time data in React - polling, WebSockets, Server-Sent Events, and state synchronization",
+            },
+          ],
+        },
+        {
+          id: "system-design",
+          name: "System Design",
+          icon: "🏛️",
+          colorClass: "cat-system",
+          phase: "advanced",
+          week: 9,
+          topics: [
+            {
+              id: "sd-framework",
+              name: "System Design Framework",
+              difficulty: "hard",
+              prompt:
+                "Frontend system design framework - requirements, constraints, architecture, data flow, and trade-offs",
+            },
+            {
+              id: "component-arch",
+              name: "Component Architecture",
+              difficulty: "hard",
+              prompt:
+                "Component architecture at scale - folder structure, module boundaries, and shared components",
+            },
+            {
+              id: "sd-ecommerce",
+              name: "E-commerce Frontend",
+              difficulty: "hard",
+              prompt:
+                "Frontend system design for e-commerce - product pages, cart, checkout, and scalability",
+            },
+            {
+              id: "sd-realtime",
+              name: "Real-time Applications",
+              difficulty: "hard",
+              prompt:
+                "Frontend system design for real-time apps - chat, notifications, live updates, and sync",
+            },
+            {
+              id: "sd-search",
+              name: "Search Experience",
+              difficulty: "hard",
+              prompt:
+                "Frontend system design for search - autocomplete, filters, faceted search, and results ranking",
+            },
+            {
+              id: "sd-dashboard",
+              name: "Dashboard Design",
+              difficulty: "hard",
+              prompt:
+                "Frontend system design for dashboards - widgets, layouts, real-time updates, and customization",
+            },
+          ],
+        },
+        {
+          id: "performance",
+          name: "Performance",
+          icon: "⚡",
+          colorClass: "cat-perf",
+          phase: "advanced",
+          week: 11,
+          topics: [
+            {
+              id: "perf-measurement",
+              name: "Performance Measurement",
+              difficulty: "medium",
+              prompt:
+                "Measuring React performance - React DevTools Profiler, Chrome DevTools, and key metrics",
+            },
+            {
+              id: "bundle-opt",
+              name: "Bundle Optimization",
+              difficulty: "hard",
+              prompt:
+                "Bundle optimization - code splitting, dynamic imports, tree shaking, and lazy loading",
+            },
+            {
+              id: "render-opt",
+              name: "Rendering Optimization",
+              difficulty: "hard",
+              prompt:
+                "Rendering optimization - preventing re-renders, memoization, and when to optimize",
+            },
+            {
+              id: "web-vitals",
+              name: "Core Web Vitals",
+              difficulty: "medium",
+              prompt:
+                "Core Web Vitals in React - LCP, FID, CLS, and optimization strategies for each",
+            },
+            {
+              id: "perf-mistakes",
+              name: "Performance Anti-patterns",
+              difficulty: "medium",
+              prompt:
+                "Common React performance mistakes - what interviewers look for and how to avoid them",
+            },
+          ],
+        },
+        {
+          id: "testing",
+          name: "Testing",
+          icon: "🧪",
+          colorClass: "cat-testing",
+          phase: "advanced",
+          week: 12,
+          topics: [
+            {
+              id: "what-to-test",
+              name: "What to Test in React",
+              difficulty: "medium",
+              prompt:
+                "Testing strategy in React - what to test, what not to test, and confidence levels",
+            },
+            {
+              id: "unit-integration",
+              name: "Unit vs Integration",
+              difficulty: "medium",
+              prompt:
+                "Unit vs integration tests in React - trade-offs, when to use each, and test pyramid",
+            },
+            {
+              id: "testing-hooks",
+              name: "Testing Custom Hooks",
+              difficulty: "medium",
+              prompt:
+                "Testing custom hooks - renderHook, act, and async testing patterns",
+            },
+            {
+              id: "testing-async",
+              name: "Testing Async Behavior",
+              difficulty: "medium",
+              prompt:
+                "Testing async behavior - promises, timers, loading states, and waitFor patterns",
+            },
+            {
+              id: "testable-components",
+              name: "Writing Testable Code",
+              difficulty: "medium",
+              prompt:
+                "Writing testable React components - dependency injection, pure functions, and separation",
+            },
+          ],
+        },
+        {
+          id: "machine-coding",
+          name: "Machine Coding",
+          icon: "💻",
+          colorClass: "cat-machine",
+          phase: "intermediate",
+          week: 0,
+          topics: [
+            {
+              id: "mc-search",
+              name: "Search with Debounce",
+              difficulty: "easy",
+              prompt:
+                "Build a search input with debounce - requirements, implementation, edge cases, and interviewer expectations",
+            },
+            {
+              id: "mc-modal",
+              name: "Modal System",
+              difficulty: "medium",
+              prompt:
+                "Build a modal system - portal, focus trap, keyboard handling, stacking, and accessibility",
+            },
+            {
+              id: "mc-toast",
+              name: "Toast Notifications",
+              difficulty: "medium",
+              prompt:
+                "Build a toast notification system - auto-dismiss, multiple toasts, imperative API, and animations",
+            },
+            {
+              id: "mc-tabs",
+              name: "Tabs Component",
+              difficulty: "medium",
+              prompt:
+                "Build compound tabs component - Tab/TabList/TabPanel, keyboard navigation, and ARIA",
+            },
+            {
+              id: "mc-accordion",
+              name: "Accordion Component",
+              difficulty: "medium",
+              prompt:
+                "Build an accordion component - expand/collapse, single vs multi mode, and animations",
+            },
+            {
+              id: "mc-form-builder",
+              name: "Form Builder",
+              difficulty: "hard",
+              prompt:
+                "Build a dynamic form builder - schema-based, validation, multiple field types, and submit handling",
+            },
+            {
+              id: "mc-infinite",
+              name: "Infinite Scroll",
+              difficulty: "medium",
+              prompt:
+                "Build infinite scroll - Intersection Observer, loading states, error handling, and performance",
+            },
+            {
+              id: "mc-autocomplete",
+              name: "Autocomplete",
+              difficulty: "hard",
+              prompt:
+                "Build autocomplete input - keyboard navigation, async suggestions, highlighting, and accessibility",
+            },
+            {
+              id: "mc-data-grid",
+              name: "Data Grid",
+              difficulty: "hard",
+              prompt:
+                "Build a data grid - sorting, filtering, pagination, and performance with large datasets",
+            },
+            {
+              id: "mc-drag-drop",
+              name: "Drag and Drop",
+              difficulty: "hard",
+              prompt:
+                "Build drag and drop - HTML5 drag API, reordering lists, and visual feedback",
+            },
+            {
+              id: "mc-carousel",
+              name: "Image Carousel",
+              difficulty: "medium",
+              prompt:
+                "Build an image carousel - navigation, auto-play, touch support, and lazy loading",
+            },
+            {
+              id: "mc-calendar",
+              name: "Date Picker",
+              difficulty: "hard",
+              prompt:
+                "Build a date picker - calendar grid, month navigation, date selection, and accessibility",
+            },
+          ],
+        },
+      ];
+
+      // State
+      let completedTopics = JSON.parse(
+        localStorage.getItem("completedTopics") || "[]"
+      );
+      let currentTopic = null;
+      let currentFilter = "all";
+
+      // Generate full learning prompt
+      function generatePrompt(topic, category) {
+        return `You are a Senior Staff Frontend Engineer at a FAANG company with 15+ years of experience. You've conducted 500+ interviews and have deep expertise in React internals, system design, and frontend architecture.
+
+I'm preparing for FAANG-level React interviews. Teach me **${topic.prompt}** with the depth and rigor expected at top tech companies.
+
+## Your Response Must Include All of These Sections:
+
+### 1. 🎯 CONCEPT OVERVIEW (5 min read)
+- What is this concept and why does it exist?
+- What problem does it solve?
+- One-sentence summary I can use in an interview
+
+### 2. 🧠 MENTAL MODEL (10 min read)
+- How should I think about this concept?
+- Analogies that make it click
+- The "aha moment" explanation
+- How it connects to other React concepts
+
+### 3. 🔬 DEEP INTERNALS (15 min read)
+- How does this work under the hood?
+- What happens step-by-step?
+- Relevant source code concepts (simplified)
+- Why React implemented it this way
+
+### 4. 📝 SYNTAX & API (5 min read)
+- Complete API reference with all parameters
+- TypeScript signatures
+- Return values and options
+
+### 5. 💻 CODE EXAMPLES (15 min read)
+Provide these specific examples:
+- **Example 1: Basic Usage** - Simplest possible with line-by-line explanation
+- **Example 2: Real-World Usage** - Production-quality example
+- **Example 3: Advanced Usage** - Complex scenario with edge cases
+- **Example 4: Anti-Pattern** - Common wrong way and the fix
+
+### 6. ⚠️ COMMON MISTAKES & PITFALLS (10 min read)
+- Top 5 mistakes developers make
+- Why each happens and how to avoid
+- Code examples of wrong vs right
+
+### 7. 🎭 INTERVIEW SCENARIOS (10 min read)
+**Conceptual Questions:**
+- 5 questions an interviewer might ask
+- Model answers for each
+
+**Code Review Question:**
+- Buggy code snippet
+- What's wrong and how to fix
+
+### 8. 🔗 CONNECTIONS & TRADE-OFFS (5 min read)
+- How this relates to other React concepts
+- When to use this vs alternatives
+- Trade-off table: Pros vs Cons
+
+### 9. 🛠️ HANDS-ON EXERCISES (30 min)
+- **Exercise 1 (Easy - 10 min)**: Verify understanding
+- **Exercise 2 (Medium - 15 min)**: Practical application
+- **Exercise 3 (Hard - 15 min)**: Edge cases & production-ready
+
+### 10. 🏗️ MINI PROJECT (45-60 min)
+- A complete small project using this concept
+- Clear requirements and acceptance criteria
+- What an interviewer would look for
+
+### 11. 📊 PERFORMANCE CONSIDERATIONS
+- How this affects performance
+- Measurement techniques
+- Optimization strategies
+
+### 12. ✅ SELF-ASSESSMENT CHECKLIST
+Before moving on, I should be able to:
+- [ ] Explain this to a junior developer
+- [ ] Explain this to an interviewer
+- [ ] Implement this from memory
+- [ ] Debug common issues
+- [ ] Make trade-off decisions
+
+### 13. 🎤 INTERVIEW SCRIPT
+Write what I should say if asked about this:
+- 30-second version (elevator pitch)
+- 2-minute version (detailed)
+- 5-minute version (deep dive with examples)
+
+---
+Be specific, use code blocks with syntax highlighting, and assume I'm smart but don't know this topic deeply.`;
+      }
+
+      // Render categories
+      function renderCategories() {
+        const container = document.getElementById("categories-container");
+        const searchTerm = document
+          .getElementById("search-input")
+          .value.toLowerCase();
+
+        let filteredCategories = categories
+          .map((cat) => {
+            let filteredTopics = cat.topics.filter((topic) => {
+              const matchesSearch =
+                topic.name.toLowerCase().includes(searchTerm) ||
+                topic.prompt.toLowerCase().includes(searchTerm);
+
+              if (currentFilter === "all") return matchesSearch;
+              if (currentFilter === "foundation")
+                return matchesSearch && cat.phase === "foundation";
+              if (currentFilter === "intermediate")
+                return matchesSearch && cat.phase === "intermediate";
+              if (currentFilter === "advanced")
+                return matchesSearch && cat.phase === "advanced";
+              if (currentFilter === "interview")
+                return matchesSearch && cat.phase === "interview";
+              if (currentFilter === "learning")
+                return matchesSearch && cat.id !== "machine-coding";
+              if (currentFilter === "coding")
+                return matchesSearch && cat.id === "machine-coding";
+              if (currentFilter === "completed")
+                return matchesSearch && completedTopics.includes(topic.id);
+              return matchesSearch;
+            });
+
+            return { ...cat, topics: filteredTopics };
+          })
+          .filter((cat) => cat.topics.length > 0);
+
+        container.innerHTML = filteredCategories
+          .map(
+            (cat) => `
+                <div class="category-card">
+                    <div class="category-header">
+                        <div class="category-icon ${cat.colorClass}">${
+              cat.icon
+            }</div>
+                        <div>
+                            <div class="category-title">${cat.name}</div>
+                            <div class="week-indicator">${
+                              cat.week > 0 ? `Week ${cat.week}` : "All Weeks"
+                            }</div>
+                        </div>
+                        <span class="category-count">${
+                          cat.topics.length
+                        } topics</span>
+                    </div>
+                    <div class="topics-list">
+                        ${cat.topics
+                          .map(
+                            (topic) => `
+                            <div class="topic-item ${
+                              completedTopics.includes(topic.id)
+                                ? "completed"
+                                : ""
+                            }" 
+                                 data-topic-id="${topic.id}"
+                                 data-category-id="${cat.id}"
+                                 data-link="${topic.link || ""}">
+                                <div class="topic-checkbox"></div>
+                                <span class="topic-name">${topic.name}</span>
+                                <span class="topic-difficulty ${
+                                  topic.difficulty
+                                }">${topic.difficulty}</span>
+                            </div>
+                        `
+                          )
+                          .join("")}
+                    </div>
+                </div>
+            `
+          )
+          .join("");
+
+        // Add click handlers
+        document.querySelectorAll(".topic-item").forEach((item) => {
+          item.addEventListener("click", (e) => {
+            if (e.target.classList.contains("topic-checkbox")) {
+              toggleComplete(item.dataset.topicId);
+              return;
+            }
+            // Redirect to link if it exists, otherwise open modal
+            if (item.dataset.link) {
+              window.location.href = item.dataset.link;
+            } else {
+              openModal(item.dataset.topicId, item.dataset.categoryId);
+            }
+          });
+        });
+      }
+
+      // Toggle complete
+      function toggleComplete(topicId) {
+        if (completedTopics.includes(topicId)) {
+          completedTopics = completedTopics.filter((id) => id !== topicId);
+        } else {
+          completedTopics.push(topicId);
+        }
+        localStorage.setItem(
+          "completedTopics",
+          JSON.stringify(completedTopics)
+        );
+        updateProgress();
+        renderCategories();
+      }
+
+      // Update progress
+      function updateProgress() {
+        const total = categories.reduce(
+          (acc, cat) => acc + cat.topics.length,
+          0
+        );
+        const completed = completedTopics.length;
+        const percentage = Math.round((completed / total) * 100);
+
+        document.getElementById(
+          "progress-text"
+        ).textContent = `${completed} / ${total}`;
+        document.getElementById("progress-fill").style.width = `${percentage}%`;
+        document.getElementById("completed-count").textContent = completed;
+        document.getElementById("all-count").textContent = total;
+      }
+
+      // Open modal
+      function openModal(topicId, categoryId) {
+        const category = categories.find((c) => c.id === categoryId);
+        const topic = category.topics.find((t) => t.id === topicId);
+
+        currentTopic = { topic, category };
+
+        document.getElementById("modal-title").textContent = topic.name;
+        document.getElementById("modal-subtitle").textContent = `${
+          category.name
+        } • Week ${category.week || "Various"}`;
+        document.getElementById("prompt-content").textContent = generatePrompt(
+          topic,
+          category
+        );
+
+        const markBtn = document.getElementById("mark-complete-btn");
+        if (completedTopics.includes(topicId)) {
+          markBtn.innerHTML = "<span>↩</span> Mark Incomplete";
+          markBtn.classList.add("btn-success");
+        } else {
+          markBtn.innerHTML = "<span>✓</span> Mark Complete";
+          markBtn.classList.remove("btn-success");
+        }
+
+        document.getElementById("modal-overlay").classList.add("active");
+        document.body.style.overflow = "hidden";
+      }
+
+      // Close modal
+      function closeModal() {
+        document.getElementById("modal-overlay").classList.remove("active");
+        document.body.style.overflow = "";
+        currentTopic = null;
+      }
+
+      // Copy prompt
+      async function copyPrompt() {
+        const prompt = document.getElementById("prompt-content").textContent;
+        await navigator.clipboard.writeText(prompt);
+        showToast("Copied to clipboard!");
+      }
+
+      // Show toast
+      function showToast(message) {
+        const toast = document.getElementById("toast");
+        document.getElementById("toast-message").textContent = message;
+        toast.classList.add("show");
+        setTimeout(() => toast.classList.remove("show"), 3000);
+      }
+
+      // Filter navigation
+      document.querySelectorAll(".nav-item[data-filter]").forEach((item) => {
+        item.addEventListener("click", () => {
+          document
+            .querySelectorAll(".nav-item")
+            .forEach((i) => i.classList.remove("active"));
+          item.classList.add("active");
+          currentFilter = item.dataset.filter;
+          renderCategories();
+        });
+      });
+
+      // Event listeners
+      document
+        .getElementById("modal-close")
+        .addEventListener("click", closeModal);
+      document
+        .getElementById("modal-overlay")
+        .addEventListener("click", (e) => {
+          if (e.target === e.currentTarget) closeModal();
+        });
+      document.getElementById("copy-btn").addEventListener("click", copyPrompt);
+      document
+        .getElementById("mark-complete-btn")
+        .addEventListener("click", () => {
+          if (currentTopic) {
+            toggleComplete(currentTopic.topic.id);
+            closeModal();
+          }
+        });
+      document
+        .getElementById("search-input")
+        .addEventListener("input", renderCategories);
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeModal();
+      });
+
+      // Initialize
+      renderCategories();
+      updateProgress();
+    </script>
+  </body>
+</html>

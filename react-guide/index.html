@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>React Core Philosophy & Rendering Model - FAANG Interview Guide</title>
+  <meta name="description" content="Comprehensive FAANG-level interview preparation guide on React internals, Virtual DOM, Fiber architecture, and rendering.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Hero Section -->
+  <header class="hero">
+    <div class="container">
+      <span class="badge">⚛️ FAANG Interview Prep</span>
+      <h1>React Core Philosophy<br>& Rendering Model</h1>
+      <p class="subtitle">Master React internals with the depth and rigor expected at top tech companies</p>
+    </div>
+  </header>
+
+  <!-- Navigation -->
+  <nav class="nav">
+    <div class="container">
+      <ul class="nav-list">
+        <li><a href="#overview">🎯 Overview</a></li>
+        <li><a href="#mental-model">🧠 Mental Model</a></li>
+        <li><a href="#internals">🔬 Internals</a></li>
+        <li><a href="#api">📝 API</a></li>
+        <li><a href="#examples">💻 Examples</a></li>
+        <li><a href="#mistakes">⚠️ Mistakes</a></li>
+        <li><a href="#interview">🎭 Interview</a></li>
+        <li><a href="#tradeoffs">🔗 Trade-offs</a></li>
+        <li><a href="#exercises">🛠️ Exercises</a></li>
+        <li><a href="#checklist">✅ Checklist</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="container">
+    <!-- Section 1: Overview -->
+    <section id="overview" class="section">
+      <div class="section-header">
+        <span class="section-icon">🎯</span>
+        <h2>Concept Overview</h2>
+      </div>
+
+      <div class="card">
+        <h3>What is React's Core Philosophy?</h3>
+        <p>React is built on three foundational principles:</p>
+        <div class="flow-diagram">
+          <div class="flow-box"><strong>Declarative</strong><br><small>Describe what, not how</small></div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-box"><strong>Component-Based</strong><br><small>Reusable, isolated pieces</small></div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-box"><strong>Unidirectional</strong><br><small>Data down, events up</small></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>The Rendering Model</h3>
+        <p>How React transforms components into DOM elements:</p>
+        <div class="flow-diagram">
+          <div class="flow-box">Virtual DOM</div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-box highlight">Reconciliation</div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-box">Fiber Architecture</div>
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr><th>Problem</th><th>Pre-React</th><th>React Solution</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>DOM complexity</td><td>Manual getElementById</td><td>Declarative JSX</td></tr>
+            <tr><td>State sync</td><td>Two-way binding</td><td>Unidirectional flow</td></tr>
+            <tr><td>Performance</td><td>Full page re-renders</td><td>Virtual DOM diffing</td></tr>
+            <tr><td>Code organization</td><td>jQuery spaghetti</td><td>Component encapsulation</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="tip">
+        <strong>💡 One-Liner for Interviews:</strong> "React's philosophy is declarative UI programming where you describe the desired state, and React's rendering model—powered by Virtual DOM diffing and the Fiber reconciler—efficiently computes and applies the minimal DOM mutations needed."
+      </div>
+    </section>
+
+    <!-- Section 2: Mental Model -->
+    <section id="mental-model" class="section">
+      <div class="section-header">
+        <span class="section-icon">🧠</span>
+        <h2>Mental Model</h2>
+      </div>
+
+      <div class="card">
+        <h3>Think of Rendering as a Pure Function</h3>
+        <div class="diagram">
+          <div class="diagram-title">The Core Equation</div>
+          <pre style="text-align:center;font-size:1.5rem;color:var(--accent);">UI = f(state)</pre>
+        </div>
+        <p>Your component is a function that takes state as input and returns UI as output. When state changes, React calls your function again, compares outputs, and updates only what changed.</p>
+      </div>
+
+      <div class="card">
+        <h3>🍽️ The Restaurant Kitchen Analogy</h3>
+        <div class="table-wrapper">
+          <table>
+            <thead><tr><th>Restaurant</th><th>React</th></tr></thead>
+            <tbody>
+              <tr><td>Customer's order</td><td>Props/State</td></tr>
+              <tr><td>Recipe card</td><td>Component function</td></tr>
+              <tr><td>Prepared dish</td><td>React Element (Virtual DOM)</td></tr>
+              <tr><td>Waiter comparing dishes</td><td>Reconciliation</td></tr>
+              <tr><td>Final plate to customer</td><td>Actual DOM</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>The chef doesn't walk to the table to modify the existing plate. They prepare a complete new dish, and the waiter figures out what changed.</p>
+      </div>
+
+      <div class="diagram">
+        <div class="diagram-title">Three Phases of Rendering</div>
+        <div class="flow-diagram">
+          <div class="flow-box">
+            <strong>1. TRIGGER</strong><br>
+            <small>setState(), props change</small><br>
+            <small style="color:var(--warning)">Schedule</small>
+          </div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-box highlight">
+            <strong>2. RENDER</strong><br>
+            <small>Call components, diff</small><br>
+            <small style="color:var(--success)">Pure, pausable</small>
+          </div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-box">
+            <strong>3. COMMIT</strong><br>
+            <small>Apply DOM changes</small><br>
+            <small style="color:var(--danger)">Sync, fast</small>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 3: Deep Internals -->
+    <section id="internals" class="section">
+      <div class="section-header">
+        <span class="section-icon">🔬</span>
+        <h2>Deep Internals</h2>
+      </div>
+
+      <div class="card">
+        <h3>Virtual DOM: What It Actually Is</h3>
+        <p>A plain JavaScript object tree representing UI structure:</p>
+        
+        <div class="code-block">
+          <div class="code-header">
+            <span>JSX → createElement → React Element</span>
+            <button class="code-toggle">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                <path d="M2 4l4 4 4-4"/>
+              </svg>
+            </button>
+          </div>
+          <div class="code-content">
+<pre><span class="comment">// JSX:</span>
+&lt;<span class="keyword">div</span> <span class="variable">className</span>=<span class="string">"container"</span>&gt;
+  &lt;<span class="keyword">h1</span>&gt;Hello&lt;/<span class="keyword">h1</span>&gt;
+&lt;/<span class="keyword">div</span>&gt;
+
+<span class="comment">// Transforms to:</span>
+React.<span class="function">createElement</span>(<span class="string">'div'</span>, { className: <span class="string">'container'</span> },
+  React.<span class="function">createElement</span>(<span class="string">'h1'</span>, <span class="keyword">null</span>, <span class="string">'Hello'</span>)
+)
+
+<span class="comment">// Produces this object (React Element):</span>
+{
+  <span class="variable">$$typeof</span>: <span class="function">Symbol</span>(react.element),
+  <span class="variable">type</span>: <span class="string">'div'</span>,
+  <span class="variable">props</span>: {
+    <span class="variable">className</span>: <span class="string">'container'</span>,
+    <span class="variable">children</span>: {
+      <span class="variable">$$typeof</span>: <span class="function">Symbol</span>(react.element),
+      <span class="variable">type</span>: <span class="string">'h1'</span>,
+      <span class="variable">props</span>: { <span class="variable">children</span>: <span class="string">'Hello'</span> }
+    }
+  }
+}</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>The Fiber Architecture</h3>
+        <p>Each component instance becomes a Fiber node — a unit of work:</p>
+        
+        <div class="diagram">
+          <div class="diagram-title">Fiber Node Structure</div>
+          <div class="fiber-tree">
+            <div class="fiber-node" style="border-color:var(--accent);">App (FiberRoot)</div>
+            <div class="fiber-connector"></div>
+            <div class="fiber-row">
+              <div class="fiber-branch">
+                <div class="fiber-node">Header</div>
+                <div class="fiber-connector" style="height:10px"></div>
+                <small style="color:var(--text-secondary)">sibling →</small>
+              </div>
+              <div class="fiber-branch">
+                <div class="fiber-node" style="border-color:var(--success);">Main</div>
+                <div class="fiber-connector"></div>
+                <div class="fiber-node">Article</div>
+              </div>
+              <div class="fiber-branch">
+                <div class="fiber-node">Footer</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="code-block collapsed">
+          <div class="code-header">
+            <span>Simplified Fiber Node Object</span>
+            <button class="code-toggle">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                <path d="M2 4l4 4 4-4"/>
+              </svg>
+            </button>
+          </div>
+          <div class="code-content">
+<pre><span class="variable">FiberNode</span> = {
+  <span class="comment">// Identity</span>
+  type: <span class="string">'div'</span> | FunctionComponent,
+  key: <span class="keyword">null</span> | <span class="keyword">string</span>,
+  
+  <span class="comment">// Relationships (linked list)</span>
+  return: FiberNode,   <span class="comment">// parent</span>
+  child: FiberNode,    <span class="comment">// first child</span>
+  sibling: FiberNode,  <span class="comment">// next sibling</span>
+  
+  <span class="comment">// State</span>
+  memoizedState: any,  <span class="comment">// hooks list</span>
+  memoizedProps: Object,
+  
+  <span class="comment">// Effects</span>
+  flags: number,       <span class="comment">// Placement | Update | Deletion</span>
+  
+  <span class="comment">// Double buffering</span>
+  alternate: FiberNode <span class="comment">// current ↔ workInProgress</span>
+}</pre>
+          </div>
+        </div>
+
+        <div class="tip">
+          <strong>Why Linked List?</strong> Allows React to pause work at any node, resume later, and prioritize urgent updates (user input) over less urgent ones.
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>What Happens When You Call setState</h3>
+        
+        <div class="accordion">
+          <div class="accordion-item">
+            <button class="accordion-header">
+              Phase 1: Trigger (Schedule)
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M2 4l4 4 4-4"/></svg>
+            </button>
+            <div class="accordion-content">
+              <div class="accordion-body">
+                <ol>
+                  <li>React creates an Update object: <code>{ action: count + 1, lane: SyncLane }</code></li>
+                  <li>Update is enqueued on the Fiber's updateQueue</li>
+                  <li>React schedules a render via Scheduler</li>
+                  <li><code>scheduleUpdateOnFiber(fiber, lane)</code> marks path to root as dirty</li>
+                </ol>
+              </div>
+            </div>
+          </div>
+          
+          <div class="accordion-item">
+            <button class="accordion-header">
+              Phase 2: Render (Reconciliation)
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M2 4l4 4 4-4"/></svg>
+            </button>
+            <div class="accordion-content">
+              <div class="accordion-body">
+                <ol>
+                  <li>Start from FiberRoot</li>
+                  <li>Clone current tree → workInProgress tree (double buffering)</li>
+                  <li>For each Fiber: call component, diff children, mark effects</li>
+                  <li>Key matching: same key → reuse; different → create/delete</li>
+                  <li>Build list of effects</li>
+                </ol>
+              </div>
+            </div>
+          </div>
+          
+          <div class="accordion-item">
+            <button class="accordion-header">
+              Phase 3: Commit
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M2 4l4 4 4-4"/></svg>
+            </button>
+            <div class="accordion-content">
+              <div class="accordion-body">
+                <ol>
+                  <li><strong>beforeMutation:</strong> getSnapshotBeforeUpdate, schedule useEffect cleanups</li>
+                  <li><strong>mutation:</strong> Apply DOM insertions/updates/deletions (synchronous)</li>
+                  <li><strong>layout:</strong> Run useLayoutEffect, componentDidMount</li>
+                  <li><strong>passive effects:</strong> Run useEffect callbacks (async, after paint)</li>
+                </ol>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Reconciliation Algorithm (Diffing)</h3>
+        <p>React's O(n) heuristic rules:</p>
+        
+        <div class="table-wrapper">
+          <table>
+            <thead><tr><th>Rule</th><th>Example</th><th>Result</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><strong>Different types = Full replace</strong></td>
+                <td><code>&lt;div&gt;</code> → <code>&lt;span&gt;</code></td>
+                <td>Entire subtree unmounted/remounted</td>
+              </tr>
+              <tr>
+                <td><strong>Same type = Update props</strong></td>
+                <td><code>className="old"</code> → <code>"new"</code></td>
+                <td>Only update attribute</td>
+              </tr>
+              <tr>
+                <td><strong>Keys identify list elements</strong></td>
+                <td><code>key="a"</code> moves position</td>
+                <td>React reorders, doesn't recreate</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 4: API -->
+    <section id="api" class="section">
+      <div class="section-header">
+        <span class="section-icon">📝</span>
+        <h2>Syntax & API</h2>
+      </div>
+
+      <div class="card">
+        <h3>Core Rendering APIs</h3>
+        
+        <div class="code-block">
+          <div class="code-header">
+            <span>createRoot (React 18+)</span>
+            <button class="code-toggle">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M2 4l4 4 4-4"/></svg>
+            </button>
+          </div>
+          <div class="code-content">
+<pre><span class="keyword">import</span> { createRoot } <span class="keyword">from</span> <span class="string">'react-dom/client'</span>;
+
+<span class="comment">// Create concurrent root</span>
+<span class="keyword">const</span> root = <span class="function">createRoot</span>(document.<span class="function">getElementById</span>(<span class="string">'root'</span>));
+
+<span class="comment">// Initial render</span>
+root.<span class="function">render</span>(&lt;<span class="variable">App</span> /&gt;);
+
+<span class="comment">// To unmount</span>
+root.<span class="function">unmount</span>();</pre>
+          </div>
+        </div>
+
+        <div class="code-block collapsed">
+          <div class="code-header">
+            <span>flushSync — Force Synchronous Update</span>
+            <button class="code-toggle">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M2 4l4 4 4-4"/></svg>
+            </button>
+          </div>
+          <div class="code-content">
+<pre><span class="keyword">import</span> { flushSync } <span class="keyword">from</span> <span class="string">'react-dom'</span>;
+
+<span class="function">flushSync</span>(() => {
+  <span class="function">setCount</span>(c => c + <span class="number">1</span>);
+});
+<span class="comment">// DOM is updated HERE, synchronously</span></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Hooks & Rendering Impact</h3>
+        <div class="table-wrapper">
+          <table>
+            <thead><tr><th>Hook</th><th>Re-render?</th><th>Purpose</th></tr></thead>
+            <tbody>
+              <tr><td><code>useState</code></td><td>✅ Yes</td><td>Setter triggers re-render</td></tr>
+              <tr><td><code>useReducer</code></td><td>✅ Yes</td><td>Dispatch triggers re-render</td></tr>
+              <tr><td><code>useMemo</code></td><td>—</td><td>Memoize during render</td></tr>
+              <tr><td><code>useCallback</code></td><td>—</td><td>Memoize function reference</td></tr>
+              <tr><td><code>useRef</code></td><td>❌ No</td><td>Mutation doesn't trigger</td></tr>
+              <tr><td><code>useContext</code></td><td>✅ Yes</td><td>Re-renders on context change</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 5: Code Examples -->
+    <section id="examples" class="section">
+      <div class="section-header">
+        <span class="section-icon">💻</span>
+        <h2>Code Examples</h2>
+      </div>
+
+      <div class="card">
+        <h3>Example 1: Basic Rendering</h3>
+        <div class="code-block">
+          <div class="code-header">
+            <span>Simplest React Render</span>
+            <button class="code-toggle">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M2 4l4 4 4-4"/></svg>
+            </button>
+          </div>
+          <div class="code-content">
+<pre><span class="keyword">import</span> { createRoot } <span class="keyword">from</span> <span class="string">'react-dom/client'</span>;
+
+<span class="comment">// 1. Get the DOM container</span>
+<span class="keyword">const</span> container = document.<span class="function">getElementById</span>(<span class="string">'root'</span>);
+
+<span class="comment">// 2. Create a React root</span>
+<span class="keyword">const</span> root = <span class="function">createRoot</span>(container);
+
+<span class="comment">// 3. Define a component (pure function: props → UI)</span>
+<span class="keyword">function</span> <span class="function">Greeting</span>({ name }) {
+  <span class="comment">// This runs during RENDER phase - keep it pure!</span>
+  <span class="keyword">return</span> &lt;<span class="keyword">h1</span>&gt;Hello, {name}!&lt;/<span class="keyword">h1</span>&gt;;
+}
+
+<span class="comment">// 4. Render the component</span>
+root.<span class="function">render</span>(&lt;<span class="variable">Greeting</span> <span class="variable">name</span>=<span class="string">"React"</span> /&gt;);</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Example 2: Production Pattern with Memoization</h3>
+        <div class="code-block">
+          <div class="code-header">
+            <span>ProductCard.jsx — Real-world Usage</span>
+            <button class="code-toggle">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M2 4l4 4 4-4"/></svg>
+            </button>
+          </div>
+          <div class="code-content">
+<pre><span class="keyword">import</span> { memo, useState, useCallback } <span class="keyword">from</span> <span class="string">'react'</span>;
+
+<span class="comment">// Memoized child - skips re-render if props unchanged</span>
+<span class="keyword">const</span> <span class="variable">PriceDisplay</span> = <span class="function">memo</span>(<span class="keyword">function</span> <span class="function">PriceDisplay</span>({ price, currency }) {
+  console.<span class="function">log</span>(<span class="string">'PriceDisplay rendered'</span>);
+  
+  <span class="keyword">const</span> formatted = <span class="keyword">new</span> Intl.<span class="function">NumberFormat</span>(<span class="string">'en-US'</span>, {
+    style: <span class="string">'currency'</span>, currency
+  }).<span class="function">format</span>(price);
+  
+  <span class="keyword">return</span> &lt;<span class="keyword">span</span>&gt;{formatted}&lt;/<span class="keyword">span</span>&gt;;
+});
+
+<span class="keyword">export function</span> <span class="function">ProductCard</span>({ product, onAddToCart }) {
+  <span class="keyword">const</span> [quantity, setQuantity] = <span class="function">useState</span>(<span class="number">1</span>);
+  
+  <span class="comment">// Stable callback - prevents child re-renders</span>
+  <span class="keyword">const</span> handleAdd = <span class="function">useCallback</span>(() => {
+    <span class="function">onAddToCart</span>(product.id, quantity);
+  }, [product.id, quantity, onAddToCart]);
+  
+  <span class="keyword">return</span> (
+    &lt;<span class="keyword">article</span>&gt;
+      &lt;<span class="keyword">h2</span>&gt;{product.name}&lt;/<span class="keyword">h2</span>&gt;
+      
+      <span class="comment">{/* Won't re-render when quantity changes */}</span>
+      &lt;<span class="variable">PriceDisplay</span> 
+        <span class="variable">price</span>={product.price} 
+        <span class="variable">currency</span>={product.currency} 
+      /&gt;
+      
+      &lt;<span class="keyword">button</span> <span class="variable">onClick</span>={handleAdd}&gt;Add to Cart&lt;/<span class="keyword">button</span>&gt;
+    &lt;/<span class="keyword">article</span>&gt;
+  );
+}</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Example 3: Anti-Pattern ❌ vs Correct ✅</h3>
+        
+        <div class="code-block">
+          <div class="code-header">
+            <span>❌ WRONG — Inline Objects/Functions Break Memoization</span>
+            <button class="code-toggle">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M2 4l4 4 4-4"/></svg>
+            </button>
+          </div>
+          <div class="code-content">
+<pre><span class="keyword">function</span> <span class="function">BadProductList</span>({ products, onSelect }) {
+  <span class="keyword">return</span> (
+    &lt;<span class="keyword">ul</span>&gt;
+      {products.<span class="function">map</span>((product, index) => (
+        &lt;<span class="keyword">li</span> 
+          <span class="comment">// ❌ Index as key - breaks on reorder</span>
+          <span class="variable">key</span>={index}
+          
+          <span class="comment">// ❌ Inline object - new ref every render</span>
+          <span class="variable">style</span>={{ marginBottom: <span class="number">10</span> }}
+          
+          <span class="comment">// ❌ Inline function - defeats memo</span>
+          <span class="variable">onClick</span>={() => <span class="function">onSelect</span>(product.id)}
+        &gt;
+          {product.name}
+        &lt;/<span class="keyword">li</span>&gt;
+      ))}
+    &lt;/<span class="keyword">ul</span>&gt;
+  );
+}</pre>
+          </div>
+        </div>
+
+        <div class="code-block">
+          <div class="code-header">
+            <span>✅ CORRECT — Stable References</span>
+            <button class="code-toggle">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M2 4l4 4 4-4"/></svg>
+            </button>
+          </div>
+          <div class="code-content">
+<pre><span class="keyword">function</span> <span class="function">GoodProductList</span>({ products, onSelect }) {
+  <span class="comment">// Move static style outside (or use CSS)</span>
+  <span class="keyword">const</span> itemStyle = <span class="function">useMemo</span>(() => ({ marginBottom: <span class="number">10</span> }), []);
+  
+  <span class="comment">// Stable callback</span>
+  <span class="keyword">const</span> handleSelect = <span class="function">useCallback</span>((id) => {
+    <span class="function">onSelect</span>(id);
+  }, [onSelect]);
+  
+  <span class="keyword">return</span> (
+    &lt;<span class="keyword">ul</span>&gt;
+      {products.<span class="function">map</span>((product) => (
+        &lt;<span class="keyword">li</span> 
+          <span class="comment">// ✅ Stable, unique key</span>
+          <span class="variable">key</span>={product.id}
+          <span class="variable">style</span>={itemStyle}
+        &gt;
+          &lt;<span class="variable">MemoizedItem</span> 
+            <span class="variable">name</span>={product.name}
+            <span class="variable">productId</span>={product.id}
+            <span class="variable">onSelect</span>={handleSelect}
+          /&gt;
+        &lt;/<span class="keyword">li</span>&gt;
+      ))}
+    &lt;/<span class="keyword">ul</span>&gt;
+  );
+}</pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 6: Common Mistakes -->
+    <section id="mistakes" class="section">
+      <div class="section-header">
+        <span class="section-icon">⚠️</span>
+        <h2>Common Mistakes & Pitfalls</h2>
+      </div>
+
+      <div class="accordion">
+        <div class="accordion-item">
+          <button class="accordion-header">
+            🔴 Mistake 1: Mutating State Directly
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M2 4l4 4 4-4"/></svg>
+          </button>
+          <div class="accordion-content">
+            <div class="accordion-body">
+              <div class="danger">
+                <code>items.push(4); setItems(items);</code> — Same reference = React bails out!
+              </div>
+              <div class="tip">
+                <strong>Fix:</strong> <code>setItems([...items, 4]);</code> — Always create new references
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <button class="accordion-header">
+            🔴 Mistake 2: Using Index as Key
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M2 4l4 4 4-4"/></svg>
+          </button>
+          <div class="accordion-content">
+            <div class="accordion-body">
+              <div class="danger">
+                <code>key={index}</code> — When items reorder, React thinks wrong elements changed!
+              </div>
+              <div class="tip">
+                <strong>Fix:</strong> <code>key={todo.id}</code> — Use stable unique IDs from your data
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <button class="accordion-header">
+            🔴 Mistake 3: setState During Render
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M2 4l4 4 4-4"/></svg>
+          </button>
+          <div class="accordion-content">
+            <div class="accordion-body">
+              <div class="danger">
+                Calling <code>setComputed(value)</code> directly in component body = infinite loop!
+              </div>
+              <div class="tip">
+                <strong>Fix:</strong> Use <code>useMemo</code> for derived values or move to <code>useEffect</code>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <button class="accordion-header">
+            🔴 Mistake 4: useEffect for Derived State
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M2 4l4 4 4-4"/></svg>
+          </button>
+          <div class="accordion-content">
+            <div class="accordion-body">
+              <div class="danger">
+                <code>useEffect(() => setFiltered(...))</code> — Causes unnecessary extra render!
+              </div>
+              <div class="tip">
+                <strong>Fix:</strong> <code>const filtered = useMemo(() => items.filter(...), [items, query])</code>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <button class="accordion-header">
+            🔴 Mistake 5: Blocking UI with Sync Work
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M2 4l4 4 4-4"/></svg>
+          </button>
+          <div class="accordion-content">
+            <div class="accordion-body">
+              <div class="danger">
+                Heavy computation in render phase freezes the entire UI!
+              </div>
+              <div class="tip">
+                <strong>Fix:</strong> Use <code>useTransition</code> or <code>useDeferredValue</code> for expensive updates
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 7: Interview Scenarios -->
+    <section id="interview" class="section">
+      <div class="section-header">
+        <span class="section-icon">🎭</span>
+        <h2>Interview Scenarios</h2>
+      </div>
+
+      <div class="card">
+        <h3>Conceptual Questions</h3>
+        
+        <div class="accordion">
+          <div class="accordion-item">
+            <button class="accordion-header">
+              Q1: "What is the Virtual DOM and why does React use it?"
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M2 4l4 4 4-4"/></svg>
+            </button>
+            <div class="accordion-content">
+              <div class="accordion-body">
+                <p><strong>Model Answer:</strong></p>
+                <p>"The Virtual DOM is a lightweight JavaScript object tree that mirrors the structure of the real DOM. When state changes, React creates a new Virtual DOM tree, diffs it against the previous one using an O(n) algorithm, and computes the minimal DOM mutations needed."</p>
+                <p>"React uses it for: <strong>Batching</strong> (multiple state changes = one update), <strong>Abstraction</strong> (same model for DOM, Native, Canvas), and <strong>Predictability</strong> (declarative model eliminates bugs)."</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <button class="accordion-header">
+              Q2: "Explain the difference between render phase and commit phase"
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M2 4l4 4 4-4"/></svg>
+            </button>
+            <div class="accordion-content">
+              <div class="accordion-body">
+                <p><strong>Model Answer:</strong></p>
+                <p>"The <strong>Render Phase</strong> is where React calls components and builds the Fiber tree. It's <em>pure</em> and <em>interruptible</em>—React can pause, abort, or restart. No side effects should happen here."</p>
+                <p>"The <strong>Commit Phase</strong> applies changes to DOM. It's <em>synchronous</em> and <em>uninterruptible</em>. This is where refs update and effects run."</p>
+                <p>"This separation enables Concurrent Mode—React can prepare multiple UI states during render but only commit the final result."</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <button class="accordion-header">
+              Q3: "What is Fiber and why did React rewrite the reconciler?"
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M2 4l4 4 4-4"/></svg>
+            </button>
+            <div class="accordion-content">
+              <div class="accordion-body">
+                <p><strong>Model Answer:</strong></p>
+                <p>"Fiber is React's reconciliation engine from React 16—a complete rewrite of the Stack Reconciler."</p>
+                <p>"The old reconciler was recursive—once started, it had to finish, blocking the main thread."</p>
+                <p>"Fiber introduces: <strong>Incremental rendering</strong> (work broken into units), <strong>Priority levels</strong> (user input interrupts less important work), <strong>Pause/resume</strong> (yield to browser, keep UI responsive)."</p>
+                <p>"Each fiber is a JS object with pointers forming a linked list tree—traversable iteratively, not recursively."</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Code Review: Find the Bug</h3>
+        
+        <div class="code-block">
+          <div class="code-header">
+            <span>What's wrong with this code?</span>
+            <button class="code-toggle">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M2 4l4 4 4-4"/></svg>
+            </button>
+          </div>
+          <div class="code-content">
+<pre><span class="keyword">function</span> <span class="function">UserProfile</span>({ userId }) {
+  <span class="keyword">const</span> [user, setUser] = <span class="function">useState</span>(<span class="keyword">null</span>);
+  
+  <span class="comment">// Fetch user on every render?</span>
+  <span class="function">fetch</span>(<span class="string">`/api/users/${userId}`</span>)
+    .<span class="function">then</span>(res => res.<span class="function">json</span>())
+    .<span class="function">then</span>(setUser);
+  
+  <span class="keyword">if</span> (!user) <span class="keyword">return</span> &lt;<span class="variable">Loading</span> /&gt;;
+  <span class="keyword">return</span> &lt;<span class="keyword">div</span>&gt;{user.name}&lt;/<span class="keyword">div</span>&gt;;
+}</pre>
+          </div>
+        </div>
+
+        <div class="danger">
+          <strong>Issues:</strong>
+          <ol>
+            <li>Side effect (fetch) in render — should be in useEffect</li>
+            <li>Infinite loop — fetch → setUser → re-render → fetch...</li>
+            <li>No cleanup — old requests could set wrong data</li>
+            <li>No error handling</li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 8: Trade-offs -->
+    <section id="tradeoffs" class="section">
+      <div class="section-header">
+        <span class="section-icon">🔗</span>
+        <h2>Connections & Trade-offs</h2>
+      </div>
+
+      <div class="card">
+        <h3>When to Use Which Optimization</h3>
+        <div class="table-wrapper">
+          <table>
+            <thead><tr><th>Scenario</th><th>Tool</th><th>Why</th></tr></thead>
+            <tbody>
+              <tr><td>Expensive child re-renders</td><td><code>React.memo</code></td><td>Skip render if props same</td></tr>
+              <tr><td>Expensive computation</td><td><code>useMemo</code></td><td>Cache calculation result</td></tr>
+              <tr><td>Callback causing re-renders</td><td><code>useCallback</code></td><td>Stable function reference</td></tr>
+              <tr><td>Non-urgent heavy update</td><td><code>useTransition</code></td><td>Keep UI responsive</td></tr>
+              <tr><td>Deferred expensive prop</td><td><code>useDeferredValue</code></td><td>Stale-while-revalidate</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Virtual DOM vs Direct Manipulation</h3>
+        <div class="table-wrapper">
+          <table>
+            <thead><tr><th>Aspect</th><th>Virtual DOM</th><th>Direct DOM</th></tr></thead>
+            <tbody>
+              <tr><td>Performance</td><td>Overhead on simple updates</td><td>Faster for surgical updates</td></tr>
+              <tr><td>Complexity</td><td>Low (React handles it)</td><td>High (manual tracking)</td></tr>
+              <tr><td>Correctness</td><td>Guaranteed consistent</td><td>Easy to get wrong</td></tr>
+              <tr><td>Cross-platform</td><td>React Native, etc.</td><td>DOM-specific</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 9: Exercises -->
+    <section id="exercises" class="section">
+      <div class="section-header">
+        <span class="section-icon">🛠️</span>
+        <h2>Hands-On Exercises</h2>
+      </div>
+
+      <div class="card">
+        <h3>Exercise 1: Fundamentals (Easy — 10 min)</h3>
+        <p><strong>Task:</strong> Create Parent/Child components with render counters. Child should NOT re-render when Parent state changes.</p>
+        <div class="tip">
+          <strong>Hint:</strong> Use <code>useRef</code> for render count (persists across renders) and <code>React.memo</code> for optimization.
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Exercise 2: Practical (Medium — 15 min)</h3>
+        <p><strong>Task:</strong> Build a filtered list where unchanged items don't re-render.</p>
+        <ul>
+          <li>Display 100 items with name + id</li>
+          <li>Search input filters by name</li>
+          <li>Console.log in each ListItem to verify</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>Exercise 3: Edge Cases (Hard — 15 min)</h3>
+        <p><strong>Task:</strong> Create editable inputs in a reorderable list. Demonstrate key bug with index, then fix.</p>
+        <div class="warning">
+          <strong>Test Case:</strong> Add 3 items, type different text in each, click "Add to beginning". With bad keys, text shifts incorrectly.
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 10: Checklist -->
+    <section id="checklist" class="section">
+      <div class="section-header">
+        <span class="section-icon">✅</span>
+        <h2>Self-Assessment Checklist</h2>
+      </div>
+
+      <div class="card">
+        <h3>Before moving on, verify you can:</h3>
+        <ul class="checklist">
+          <li>Explain step-by-step what happens when setState is called</li>
+          <li>Describe the three phases of rendering (trigger, render, commit)</li>
+          <li>Articulate why React uses Virtual DOM</li>
+          <li>Explain Fiber architecture and linked list traversal</li>
+          <li>Describe how reconciliation uses keys</li>
+          <li>Identify when a component will re-render</li>
+          <li>Use React.memo, useMemo, useCallback appropriately</li>
+          <li>Debug "too many re-renders" errors</li>
+          <li>Measure performance with DevTools Profiler</li>
+          <li>Give 30-second, 2-minute, and 5-minute explanations</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Quick Reference Card -->
+    <section class="section">
+      <div class="section-header">
+        <span class="section-icon">📚</span>
+        <h2>Quick Reference Card</h2>
+      </div>
+
+      <div class="diagram" style="font-family: 'Fira Code', monospace; font-size: 0.85rem;">
+<pre style="color:var(--text-primary);">
+┌─────────────────────────────────────────────────────────────┐
+│             REACT RENDERING CHEAT SHEET                     │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  <span style="color:var(--accent)">TRIGGER RE-RENDER:</span>                                        │
+│  • setState()      - State change                          │
+│  • props change    - Parent re-renders                     │
+│  • context change  - useContext value different            │
+│                                                             │
+│  <span style="color:var(--success)">SKIP RE-RENDER:</span>                                            │
+│  • React.memo(Component)    - Compare props               │
+│  • useMemo(fn, deps)        - Memoize value               │
+│  • useCallback(fn, deps)    - Memoize function            │
+│                                                             │
+│  <span style="color:var(--purple)">PHASES:</span>                                                    │
+│  1. Trigger  → Schedule (setState enqueues)                │
+│  2. Render   → Pure, pausable (diff)                       │
+│  3. Commit   → Sync, DOM + effects                         │
+│                                                             │
+│  <span style="color:var(--success)">DO's:</span>                              <span style="color:var(--danger)">DON'Ts:</span>                 │
+│  ✓ Keep render pure             ✗ Mutate state directly   │
+│  ✓ Derive state when possible   ✗ setState during render  │
+│  ✓ Profile before optimizing    ✗ Index as key            │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+</pre>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer style="text-align:center;padding:3rem 0;border-top:1px solid var(--border);color:var(--text-secondary);">
+    <p>React Core Philosophy & Rendering Model — FAANG Interview Guide</p>
+    <p style="font-size:0.875rem;">Master the internals 🚀</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
