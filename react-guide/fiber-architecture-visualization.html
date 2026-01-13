@@ -1,0 +1,1494 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚛️ React Fiber Architecture Visualizer</title>
+    <style>
+        :root {
+            --bg-dark: #0a0a14;
+            --bg-card: #12121f;
+            --bg-card-hover: #1a1a2e;
+            --primary: #61dafb;
+            --secondary: #bb86fc;
+            --success: #4ade80;
+            --danger: #f87171;
+            --warning: #fbbf24;
+            --orange: #fb923c;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --border: #2d2d4a;
+            --sync-lane: #ef4444;
+            --transition-lane: #a855f7;
+            --idle-lane: #6b7280;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 100%);
+            padding: 2rem;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(97, 218, 251, 0.1) 0%, transparent 40%),
+                radial-gradient(circle at 80% 50%, rgba(187, 134, 252, 0.1) 0%, transparent 40%);
+            animation: headerPulse 6s ease-in-out infinite;
+        }
+
+        @keyframes headerPulse {
+
+            0%,
+            100% {
+                opacity: 0.5;
+            }
+
+            50% {
+                opacity: 1;
+            }
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Section */
+        .section {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Concept Cards */
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .concept-card {
+            background: var(--bg-dark);
+            border-radius: 12px;
+            padding: 1.25rem;
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .concept-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--primary);
+        }
+
+        .concept-card h3 {
+            color: var(--primary);
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .concept-card p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        /* Fiber Tree Visualization */
+        .fiber-tree-container {
+            display: flex;
+            gap: 2rem;
+            margin: 1.5rem 0;
+        }
+
+        @media (max-width: 1000px) {
+            .fiber-tree-container {
+                flex-direction: column;
+            }
+        }
+
+        .tree-panel {
+            flex: 1;
+            background: var(--bg-dark);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 2px solid var(--border);
+            min-height: 400px;
+        }
+
+        .tree-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tree-label {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .tree-label.current {
+            color: var(--primary);
+        }
+
+        .tree-label.wip {
+            color: var(--warning);
+        }
+
+        /* Fiber Nodes */
+        .fiber-tree {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 1rem;
+        }
+
+        .fiber-level {
+            display: flex;
+            gap: 0.75rem;
+            margin: 0.5rem 0;
+            position: relative;
+        }
+
+        .fiber-node {
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            padding: 0.75rem;
+            min-width: 90px;
+            text-align: center;
+            position: relative;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .fiber-node:hover {
+            transform: scale(1.05);
+        }
+
+        .fiber-node.active {
+            border-color: var(--warning);
+            box-shadow: 0 0 20px rgba(251, 191, 36, 0.5);
+            animation: nodeActive 0.5s ease infinite alternate;
+        }
+
+        @keyframes nodeActive {
+            from {
+                box-shadow: 0 0 15px rgba(251, 191, 36, 0.4);
+            }
+
+            to {
+                box-shadow: 0 0 25px rgba(251, 191, 36, 0.7);
+            }
+        }
+
+        .fiber-node.completed {
+            border-color: var(--success);
+            background: rgba(74, 222, 128, 0.1);
+        }
+
+        .fiber-node.pending {
+            opacity: 0.5;
+        }
+
+        .fiber-node.interrupted {
+            border-color: var(--danger);
+            animation: shake 0.3s ease;
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-5px);
+            }
+
+            75% {
+                transform: translateX(5px);
+            }
+        }
+
+        .fiber-node .node-type {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            margin-bottom: 0.2rem;
+        }
+
+        .fiber-node .node-name {
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .fiber-node .node-emoji {
+            font-size: 1.2rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .fiber-node .node-state {
+            font-size: 0.65rem;
+            color: var(--secondary);
+            margin-top: 0.25rem;
+            padding: 2px 6px;
+            background: rgba(187, 134, 252, 0.1);
+            border-radius: 4px;
+        }
+
+        /* Connection Lines */
+        .connection {
+            position: absolute;
+            background: var(--border);
+            z-index: 0;
+        }
+
+        .connection.vertical {
+            width: 2px;
+            height: 20px;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        /* Work Loop Visualization */
+        .work-loop-container {
+            background: var(--bg-dark);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .work-loop-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .work-loop-timeline {
+            display: flex;
+            align-items: center;
+            height: 60px;
+            background: var(--bg-card);
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .timeline-block {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .timeline-block.work {
+            background: linear-gradient(135deg, var(--primary), #4fc3f7);
+            color: #000;
+        }
+
+        .timeline-block.yield {
+            background: linear-gradient(135deg, var(--warning), var(--orange));
+            color: #000;
+        }
+
+        .timeline-block.commit {
+            background: linear-gradient(135deg, var(--success), #22c55e);
+            color: #000;
+        }
+
+        .timeline-block.idle {
+            background: var(--bg-card-hover);
+            color: var(--text-muted);
+        }
+
+        .timeline-block.active::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: shimmer 1s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            to {
+                left: 100%;
+            }
+        }
+
+        /* Priority Lanes */
+        .lanes-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin: 1rem 0;
+        }
+
+        .lane {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem 1rem;
+            background: var(--bg-dark);
+            border-radius: 8px;
+            border-left: 4px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .lane.active {
+            transform: translateX(10px);
+        }
+
+        .lane.sync {
+            border-left-color: var(--sync-lane);
+        }
+
+        .lane.transition {
+            border-left-color: var(--transition-lane);
+        }
+
+        .lane.idle {
+            border-left-color: var(--idle-lane);
+        }
+
+        .lane-label {
+            font-weight: 600;
+            font-size: 0.85rem;
+            min-width: 120px;
+        }
+
+        .lane-label.sync {
+            color: var(--sync-lane);
+        }
+
+        .lane-label.transition {
+            color: var(--transition-lane);
+        }
+
+        .lane-label.idle {
+            color: var(--idle-lane);
+        }
+
+        .lane-queue {
+            flex: 1;
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .lane-update {
+            padding: 0.35rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            animation: popIn 0.3s ease;
+        }
+
+        @keyframes popIn {
+            from {
+                transform: scale(0);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .lane-update.sync {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--sync-lane);
+        }
+
+        .lane-update.transition {
+            background: rgba(168, 85, 247, 0.2);
+            color: var(--transition-lane);
+        }
+
+        .lane-update.idle {
+            background: rgba(107, 114, 128, 0.2);
+            color: var(--idle-lane);
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin: 1.5rem 0;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-sync {
+            background: linear-gradient(135deg, var(--sync-lane), #dc2626);
+            color: #fff;
+        }
+
+        .btn-sync:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+        }
+
+        .btn-transition {
+            background: linear-gradient(135deg, var(--transition-lane), #9333ea);
+            color: #fff;
+        }
+
+        .btn-transition:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(168, 85, 247, 0.4);
+        }
+
+        .btn-interrupt {
+            background: linear-gradient(135deg, var(--warning), var(--orange));
+            color: #000;
+        }
+
+        .btn-interrupt:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(251, 191, 36, 0.4);
+        }
+
+        .btn-reset {
+            background: var(--bg-card-hover);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-reset:hover:not(:disabled) {
+            background: var(--border);
+        }
+
+        /* Speed Control */
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--bg-dark);
+            border-radius: 10px;
+            margin-bottom: 1rem;
+        }
+
+        .speed-control label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .speed-control input[type="range"] {
+            flex: 1;
+            max-width: 200px;
+            accent-color: var(--primary);
+        }
+
+        /* Log Panel */
+        .log-panel {
+            background: var(--bg-dark);
+            border-radius: 10px;
+            padding: 1rem;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .log-title {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .log-entry {
+            padding: 0.4rem 0.75rem;
+            border-radius: 6px;
+            margin-bottom: 0.4rem;
+            font-size: 0.8rem;
+            animation: slideIn 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .log-entry.work {
+            background: rgba(97, 218, 251, 0.1);
+            border-left: 3px solid var(--primary);
+        }
+
+        .log-entry.yield {
+            background: rgba(251, 191, 36, 0.1);
+            border-left: 3px solid var(--warning);
+        }
+
+        .log-entry.commit {
+            background: rgba(74, 222, 128, 0.1);
+            border-left: 3px solid var(--success);
+        }
+
+        .log-entry.interrupt {
+            background: rgba(248, 113, 113, 0.1);
+            border-left: 3px solid var(--danger);
+        }
+
+        .log-entry.priority {
+            background: rgba(168, 85, 247, 0.1);
+            border-left: 3px solid var(--secondary);
+        }
+
+        .log-time {
+            color: var(--text-muted);
+            font-size: 0.7rem;
+            min-width: 40px;
+        }
+
+        /* Demo Section */
+        .demo-area {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        @media (max-width: 800px) {
+            .demo-area {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .demo-panel {
+            background: var(--bg-dark);
+            border-radius: 12px;
+            padding: 1.25rem;
+            border: 2px solid var(--border);
+        }
+
+        .demo-panel h4 {
+            margin-bottom: 1rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .input-demo {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg-card);
+            color: var(--text);
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .input-demo:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .results-list {
+            margin-top: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .result-item {
+            padding: 0.75rem 1rem;
+            background: var(--bg-card);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .result-item.stale {
+            opacity: 0.5;
+        }
+
+        .stale-indicator {
+            background: rgba(251, 191, 36, 0.2);
+            color: var(--warning);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        /* Counter Demo */
+        .counter-display {
+            font-size: 3rem;
+            font-weight: bold;
+            text-align: center;
+            padding: 1.5rem;
+            background: var(--bg-card);
+            border-radius: 12px;
+            margin: 1rem 0;
+            transition: all 0.3s ease;
+        }
+
+        .counter-display.sync-update {
+            color: var(--sync-lane);
+            animation: counterPulse 0.3s ease;
+        }
+
+        .counter-display.transition-update {
+            color: var(--transition-lane);
+        }
+
+        @keyframes counterPulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        /* Comparison Table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .comparison-table th {
+            background: var(--bg-dark);
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .comparison-table tr:hover td {
+            background: var(--bg-card-hover);
+        }
+
+        /* Info Box */
+        .info-box {
+            background: linear-gradient(135deg, rgba(97, 218, 251, 0.1), rgba(187, 134, 252, 0.1));
+            border: 1px solid var(--primary);
+            border-radius: 10px;
+            padding: 1rem 1.25rem;
+            margin: 1rem 0;
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-start;
+        }
+
+        .info-box .icon {
+            font-size: 1.2rem;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border);
+            margin-top: 2rem;
+        }
+
+        /* Fiber Detail Popup */
+        .fiber-detail {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--bg-card);
+            border: 2px solid var(--primary);
+            border-radius: 16px;
+            padding: 1.5rem;
+            min-width: 320px;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .fiber-detail.show {
+            display: block;
+            animation: fadeIn 0.2s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.9);
+            }
+
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        .fiber-detail-close {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.25rem;
+            cursor: pointer;
+        }
+
+        .fiber-detail h3 {
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+
+        .fiber-prop {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.85rem;
+        }
+
+        .fiber-prop-key {
+            color: var(--text-muted);
+        }
+
+        .fiber-prop-value {
+            color: var(--secondary);
+            font-family: monospace;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            display: none;
+        }
+
+        .overlay.show {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <h1>⚛️ React Fiber Architecture Visualizer</h1>
+        <p>Watch how Fiber enables incremental, interruptible rendering with priority scheduling 🚀</p>
+    </header>
+
+    <div class="container">
+        <!-- Concept Overview -->
+        <section class="section">
+            <h2 class="section-title">🧠 Core Concepts</h2>
+            <div class="concept-grid">
+                <div class="concept-card">
+                    <h3>🌳 Fiber Node</h3>
+                    <p>A JS object representing a unit of work - one per component in the tree</p>
+                </div>
+                <div class="concept-card">
+                    <h3>🔄 Work Loop</h3>
+                    <p>Iterative loop that can pause, yield to browser, and resume</p>
+                </div>
+                <div class="concept-card">
+                    <h3>⚡ Priority Lanes</h3>
+                    <p>SyncLane (urgent) vs TransitionLane (deferrable)</p>
+                </div>
+                <div class="concept-card">
+                    <h3>🎭 Double Buffer</h3>
+                    <p>Current tree (displayed) and Work-in-Progress tree (building)</p>
+                </div>
+                <div class="concept-card">
+                    <h3>⏸️ Interruptible</h3>
+                    <p>Can pause mid-render for high-priority updates</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- The Tricky Demo: Priority Interruption -->
+        <section class="section">
+            <h2 class="section-title">🪤 The Tricky Demo: Priority Interruption</h2>
+
+            <div class="info-box">
+                <span class="icon">💡</span>
+                <div>
+                    <strong>The Scenario:</strong> A slow transition is rendering. A high-priority click happens
+                    mid-render.
+                    <br><strong>Watch:</strong> Fiber ABANDONS the transition work and immediately handles the sync
+                    update!
+                </div>
+            </div>
+
+            <div class="speed-control">
+                <label>⏱️ Animation Speed:</label>
+                <input type="range" id="speed" min="100" max="1500" value="500">
+                <span id="speedValue">500ms</span>
+            </div>
+
+            <div class="controls">
+                <button class="btn btn-transition" onclick="startTransitionDemo()" id="transitionBtn">
+                    🔄 Start Transition (Slow)
+                </button>
+                <button class="btn btn-sync" onclick="triggerSyncUpdate()" id="syncBtn">
+                    ⚡ Sync Update (Interrupt!)
+                </button>
+                <button class="btn btn-reset" onclick="resetDemo()">
+                    🔄 Reset
+                </button>
+            </div>
+
+            <!-- Priority Lanes -->
+            <div class="lanes-container">
+                <div class="lane sync" id="sync-lane">
+                    <span class="lane-label sync">⚡ SyncLane</span>
+                    <div class="lane-queue" id="sync-queue"></div>
+                </div>
+                <div class="lane transition" id="transition-lane">
+                    <span class="lane-label transition">🔄 TransitionLane</span>
+                    <div class="lane-queue" id="transition-queue"></div>
+                </div>
+            </div>
+
+            <!-- Work Loop Timeline -->
+            <div class="work-loop-container">
+                <div class="work-loop-header">
+                    <span style="color: var(--text-muted)">📊 Work Loop Timeline</span>
+                    <span id="phase-indicator" style="font-weight: 600;">Idle</span>
+                </div>
+                <div class="work-loop-timeline" id="timeline">
+                    <div class="timeline-block idle" style="flex: 1;">Waiting for updates...</div>
+                </div>
+            </div>
+
+            <!-- Fiber Trees -->
+            <div class="fiber-tree-container">
+                <div class="tree-panel">
+                    <div class="tree-panel-header">
+                        <span class="tree-label current">📍 Current Tree</span>
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">(What user sees)</span>
+                    </div>
+                    <div class="fiber-tree" id="current-tree"></div>
+                </div>
+                <div class="tree-panel">
+                    <div class="tree-panel-header">
+                        <span class="tree-label wip">🔨 Work-in-Progress Tree</span>
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">(Being built)</span>
+                    </div>
+                    <div class="fiber-tree" id="wip-tree"></div>
+                </div>
+            </div>
+
+            <!-- Log Panel -->
+            <div class="log-panel">
+                <div class="log-title">📋 Reconciliation Log</div>
+                <div id="log-entries"></div>
+            </div>
+        </section>
+
+        <!-- Real Demo: Search with Transition -->
+        <section class="section">
+            <h2 class="section-title">🔍 Live Demo: Search with Transitions</h2>
+
+            <div class="info-box">
+                <span class="icon">⌨️</span>
+                <div>
+                    <strong>Type rapidly</strong> in both inputs. Notice the difference!
+                    <br>Left (sync) blocks. Right (transition) stays smooth with stale indicator.
+                </div>
+            </div>
+
+            <div class="demo-area">
+                <div class="demo-panel">
+                    <h4>❌ Without Transition (Sync)</h4>
+                    <input type="text" class="input-demo" id="sync-search" placeholder="Type to search..."
+                        oninput="handleSyncSearch(this.value)">
+                    <div class="results-list" id="sync-results"></div>
+                </div>
+                <div class="demo-panel">
+                    <h4>✅ With Transition (Concurrent)</h4>
+                    <input type="text" class="input-demo" id="transition-search" placeholder="Type to search..."
+                        oninput="handleTransitionSearch(this.value)">
+                    <div id="transition-pending" style="display: none;" class="stale-indicator">⏳ Updating...</div>
+                    <div class="results-list" id="transition-results"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Key Takeaways -->
+        <section class="section">
+            <h2 class="section-title">🎯 Key Takeaways for Interviews</h2>
+
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Aspect</th>
+                        <th>Stack Reconciler (Old)</th>
+                        <th>Fiber Reconciler (New)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Architecture</td>
+                        <td>Recursive, uses JS call stack</td>
+                        <td>Iterative, uses linked-list structure</td>
+                    </tr>
+                    <tr>
+                        <td>Interruptibility</td>
+                        <td>❌ Cannot pause</td>
+                        <td>✅ Can pause and resume</td>
+                    </tr>
+                    <tr>
+                        <td>Priority</td>
+                        <td>❌ All updates equal</td>
+                        <td>✅ Lanes-based priority system</td>
+                    </tr>
+                    <tr>
+                        <td>Blocking</td>
+                        <td>Blocks until complete</td>
+                        <td>Can yield to browser</td>
+                    </tr>
+                    <tr>
+                        <td>Concurrent Features</td>
+                        <td>❌ Not possible</td>
+                        <td>✅ Suspense, Transitions, etc.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="info-box">
+                <span class="icon">🎤</span>
+                <div>
+                    <strong>Interview One-Liner:</strong><br>
+                    "Fiber is React's reconciliation engine that represents components as nodes in a linked-list tree,
+                    enabling incremental rendering with priority scheduling - the foundation for concurrent features
+                    like Suspense and Transitions."
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <footer class="footer">
+        <p>Built for FAANG Interview Prep 🚀 | React Fiber Architecture Deep Dive</p>
+    </footer>
+
+    <!-- Fiber Detail Popup -->
+    <div class="overlay" id="overlay" onclick="closeDetail()"></div>
+    <div class="fiber-detail" id="fiber-detail">
+        <button class="fiber-detail-close" onclick="closeDetail()">×</button>
+        <h3 id="detail-title">Fiber Node</h3>
+        <div id="detail-content"></div>
+    </div>
+
+    <script>
+        // State
+        let isRunning = false;
+        let currentPhase = 'idle';
+        let workProgress = 0;
+        let interruptRequested = false;
+        let animationTimeout = null;
+
+        // Fiber tree data
+        const fiberTree = {
+            name: 'App',
+            emoji: '📱',
+            type: 'FunctionComponent',
+            children: [
+                {
+                    name: 'Header',
+                    emoji: '🎨',
+                    type: 'FunctionComponent',
+                    children: [
+                        { name: 'Logo', emoji: '⚛️', type: 'HostComponent' },
+                        { name: 'Nav', emoji: '🧭', type: 'FunctionComponent' }
+                    ]
+                },
+                {
+                    name: 'Main',
+                    emoji: '📄',
+                    type: 'FunctionComponent',
+                    children: [
+                        { name: 'List', emoji: '📋', type: 'FunctionComponent' },
+                        { name: 'Detail', emoji: '🔍', type: 'FunctionComponent' }
+                    ]
+                },
+                {
+                    name: 'Footer',
+                    emoji: '🦶',
+                    type: 'HostComponent',
+                    children: []
+                }
+            ]
+        };
+
+        // Flatten tree for traversal
+        function flattenTree(node, result = [], depth = 0) {
+            result.push({ ...node, depth, children: node.children?.length || 0 });
+            if (node.children) {
+                node.children.forEach(child => flattenTree(child, result, depth + 1));
+            }
+            return result;
+        }
+
+        const flatNodes = flattenTree(fiberTree);
+
+        // Speed control
+        const speedSlider = document.getElementById('speed');
+        const speedValue = document.getElementById('speedValue');
+        speedSlider.addEventListener('input', (e) => {
+            speedValue.textContent = e.target.value + 'ms';
+        });
+
+        function getSpeed() {
+            return parseInt(speedSlider.value);
+        }
+
+        // Render fiber trees
+        function renderTree(containerId, nodeStates = {}) {
+            const container = document.getElementById(containerId);
+
+            // Create tree structure with levels
+            const levels = {};
+            flatNodes.forEach(node => {
+                if (!levels[node.depth]) levels[node.depth] = [];
+                levels[node.depth].push(node);
+            });
+
+            let html = '';
+            Object.keys(levels).forEach(depth => {
+                html += `<div class="fiber-level">`;
+                levels[depth].forEach(node => {
+                    const state = nodeStates[node.name] || 'pending';
+                    html += `
+                        <div class="fiber-node ${state}" onclick="showFiberDetail('${node.name}', '${node.type}', '${node.emoji}')">
+                            ${depth > 0 ? '<div class="connection vertical"></div>' : ''}
+                            <div class="node-emoji">${node.emoji}</div>
+                            <div class="node-type">${node.type}</div>
+                            <div class="node-name">${node.name}</div>
+                            ${state !== 'pending' ? `<div class="node-state">${state}</div>` : ''}
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function showFiberDetail(name, type, emoji) {
+            const detail = document.getElementById('fiber-detail');
+            const overlay = document.getElementById('overlay');
+            const title = document.getElementById('detail-title');
+            const content = document.getElementById('detail-content');
+
+            title.textContent = `${emoji} ${name} Fiber`;
+            content.innerHTML = `
+                <div class="fiber-prop">
+                    <span class="fiber-prop-key">tag</span>
+                    <span class="fiber-prop-value">${type}</span>
+                </div>
+                <div class="fiber-prop">
+                    <span class="fiber-prop-key">key</span>
+                    <span class="fiber-prop-value">null</span>
+                </div>
+                <div class="fiber-prop">
+                    <span class="fiber-prop-key">memoizedState</span>
+                    <span class="fiber-prop-value">{ count: 0 }</span>
+                </div>
+                <div class="fiber-prop">
+                    <span class="fiber-prop-key">lanes</span>
+                    <span class="fiber-prop-value">0b0001</span>
+                </div>
+                <div class="fiber-prop">
+                    <span class="fiber-prop-key">alternate</span>
+                    <span class="fiber-prop-value">[Fiber]</span>
+                </div>
+                <div class="fiber-prop">
+                    <span class="fiber-prop-key">flags</span>
+                    <span class="fiber-prop-value">NoFlags</span>
+                </div>
+            `;
+
+            detail.classList.add('show');
+            overlay.classList.add('show');
+        }
+
+        function closeDetail() {
+            document.getElementById('fiber-detail').classList.remove('show');
+            document.getElementById('overlay').classList.remove('show');
+        }
+
+        // Logging
+        function addLog(message, type) {
+            const log = document.getElementById('log-entries');
+            const time = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.innerHTML = `<span class="log-time">${time}</span>${message}`;
+            log.insertBefore(entry, log.firstChild);
+
+            // Limit log entries
+            while (log.children.length > 20) {
+                log.removeChild(log.lastChild);
+            }
+        }
+
+        function clearLogs() {
+            document.getElementById('log-entries').innerHTML = '';
+        }
+
+        // Update timeline
+        function updateTimeline(blocks) {
+            const timeline = document.getElementById('timeline');
+            timeline.innerHTML = blocks.map(b =>
+                `<div class="timeline-block ${b.type} ${b.active ? 'active' : ''}" style="flex: ${b.flex};">${b.label}</div>`
+            ).join('');
+        }
+
+        // Update phase indicator
+        function setPhase(phase) {
+            currentPhase = phase;
+            const indicator = document.getElementById('phase-indicator');
+            const phases = {
+                'idle': { text: '💤 Idle', color: 'var(--text-muted)' },
+                'render': { text: '🔨 Render Phase', color: 'var(--warning)' },
+                'commit': { text: '✅ Commit Phase', color: 'var(--success)' },
+                'interrupted': { text: '⚡ Interrupted!', color: 'var(--danger)' }
+            };
+            indicator.textContent = phases[phase].text;
+            indicator.style.color = phases[phase].color;
+        }
+
+        // Add update to lane
+        function addToLane(lane, label) {
+            const queue = document.getElementById(`${lane}-queue`);
+            const update = document.createElement('span');
+            update.className = `lane-update ${lane}`;
+            update.textContent = label;
+            queue.appendChild(update);
+            document.getElementById(`${lane}-lane`).classList.add('active');
+        }
+
+        function clearLane(lane) {
+            document.getElementById(`${lane}-queue`).innerHTML = '';
+            document.getElementById(`${lane}-lane`).classList.remove('active');
+        }
+
+        // Sleep helper
+        function sleep(ms) {
+            return new Promise(resolve => {
+                animationTimeout = setTimeout(resolve, ms);
+            });
+        }
+
+        // Work loop simulation
+        async function startTransitionDemo() {
+            if (isRunning) return;
+            isRunning = true;
+            interruptRequested = false;
+
+            document.getElementById('transitionBtn').disabled = true;
+
+            clearLogs();
+            addLog('📥 Transition update scheduled', 'priority');
+            addToLane('transition', 'setState()');
+
+            await sleep(getSpeed() / 2);
+
+            setPhase('render');
+            addLog('🔄 Starting render phase (TransitionLane)', 'work');
+
+            const nodeStates = {};
+
+            // Work through each node
+            for (let i = 0; i < flatNodes.length; i++) {
+                if (interruptRequested) {
+                    // Interrupt!
+                    addLog('⚡ INTERRUPT! Higher priority update arrived', 'interrupt');
+                    setPhase('interrupted');
+
+                    // Show interrupted state
+                    flatNodes.forEach(n => nodeStates[n.name] = 'interrupted');
+                    renderTree('wip-tree', nodeStates);
+
+                    await sleep(getSpeed());
+
+                    // Handle sync update
+                    addLog('🚀 Processing SyncLane update first...', 'priority');
+                    clearLane('sync');
+
+                    await sleep(getSpeed());
+
+                    // Quick sync update
+                    setPhase('commit');
+                    addLog('✅ Sync update committed!', 'commit');
+
+                    // Reset and restart transition
+                    await sleep(getSpeed());
+                    addLog('🔄 Restarting abandoned transition work...', 'work');
+                    setPhase('render');
+
+                    // Reset states
+                    flatNodes.forEach(n => nodeStates[n.name] = 'pending');
+                    renderTree('wip-tree', nodeStates);
+
+                    interruptRequested = false;
+                    i = -1; // Restart loop
+                    continue;
+                }
+
+                const node = flatNodes[i];
+                nodeStates[node.name] = 'active';
+                renderTree('wip-tree', nodeStates);
+
+                addLog(`🔨 beginWork(${node.emoji} ${node.name})`, 'work');
+
+                // Update timeline
+                const progress = ((i + 1) / flatNodes.length) * 100;
+                updateTimeline([
+                    { type: 'work', flex: progress, label: `Work ${Math.round(progress)}%`, active: true },
+                    { type: 'idle', flex: 100 - progress, label: '' }
+                ]);
+
+                await sleep(getSpeed());
+
+                nodeStates[node.name] = 'completed';
+
+                // Yield check
+                if (i < flatNodes.length - 1 && i % 2 === 1) {
+                    addLog('⏸️ shouldYield() → yielding to browser', 'yield');
+                    updateTimeline([
+                        { type: 'work', flex: progress, label: `Work ${Math.round(progress)}%` },
+                        { type: 'yield', flex: 10, label: '⏸️', active: true },
+                        { type: 'idle', flex: 90 - progress, label: '' }
+                    ]);
+                    await sleep(getSpeed() / 2);
+                }
+            }
+
+            // All nodes completed
+            renderTree('wip-tree', nodeStates);
+
+            // Commit phase
+            addLog('📋 Render complete, entering commit phase', 'commit');
+            setPhase('commit');
+
+            updateTimeline([
+                { type: 'work', flex: 70, label: 'Render' },
+                { type: 'commit', flex: 30, label: 'Commit', active: true }
+            ]);
+
+            await sleep(getSpeed());
+
+            // Swap trees
+            addLog('🔄 Swapping trees: WIP → Current', 'commit');
+            renderTree('current-tree', nodeStates);
+            clearLane('transition');
+
+            await sleep(getSpeed());
+
+            addLog('✅ Commit complete!', 'commit');
+            setPhase('idle');
+            updateTimeline([{ type: 'idle', flex: 1, label: 'Complete ✓' }]);
+
+            isRunning = false;
+            document.getElementById('transitionBtn').disabled = false;
+        }
+
+        function triggerSyncUpdate() {
+            if (!isRunning) {
+                // Just show a quick sync update
+                addLog('⚡ Sync update (no transition running)', 'priority');
+                addToLane('sync', 'onClick()');
+
+                setTimeout(() => {
+                    clearLane('sync');
+                    addLog('✅ Sync update processed immediately', 'commit');
+                }, getSpeed());
+                return;
+            }
+
+            // Interrupt running transition
+            addLog('⚡ SyncLane update incoming!', 'priority');
+            addToLane('sync', 'onClick()');
+            interruptRequested = true;
+        }
+
+        function resetDemo() {
+            isRunning = false;
+            interruptRequested = false;
+            if (animationTimeout) clearTimeout(animationTimeout);
+
+            clearLogs();
+            clearLane('sync');
+            clearLane('transition');
+            setPhase('idle');
+
+            updateTimeline([{ type: 'idle', flex: 1, label: 'Waiting for updates...' }]);
+
+            const emptyStates = {};
+            flatNodes.forEach(n => emptyStates[n.name] = 'pending');
+            renderTree('current-tree', {});
+            renderTree('wip-tree', emptyStates);
+
+            document.getElementById('transitionBtn').disabled = false;
+        }
+
+        // Search Demo
+        const items = [
+            '🍎 Apple', '🍌 Banana', '🍒 Cherry', '🍇 Grape', '🍊 Orange',
+            '🍋 Lemon', '🍓 Strawberry', '🫐 Blueberry', '🥝 Kiwi', '🍑 Peach'
+        ];
+
+        function heavyFilter(query) {
+            // Simulate heavy computation
+            const start = performance.now();
+            while (performance.now() - start < 100) { } // Block for 100ms
+
+            if (!query) return items;
+            return items.filter(item => item.toLowerCase().includes(query.toLowerCase()));
+        }
+
+        function handleSyncSearch(query) {
+            const results = heavyFilter(query);
+            document.getElementById('sync-results').innerHTML = results
+                .map(r => `<div class="result-item">${r}</div>`)
+                .join('');
+        }
+
+        let transitionTimeout = null;
+        function handleTransitionSearch(query) {
+            // Show pending immediately
+            document.getElementById('transition-pending').style.display = 'block';
+
+            // Clear previous timeout
+            if (transitionTimeout) clearTimeout(transitionTimeout);
+
+            // Simulate transition behavior with timeout
+            transitionTimeout = setTimeout(() => {
+                const results = heavyFilter(query);
+                document.getElementById('transition-results').innerHTML = results
+                    .map(r => `<div class="result-item">${r}</div>`)
+                    .join('');
+                document.getElementById('transition-pending').style.display = 'none';
+            }, 50);
+        }
+
+        // Initialize
+        resetDemo();
+        handleSyncSearch('');
+        handleTransitionSearch('');
+    </script>
+</body>
+
+</html>

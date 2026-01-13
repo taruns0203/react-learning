@@ -1,0 +1,1390 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚛️ React Reconciliation & Diffing Algorithm Visualizer</title>
+    <style>
+        :root {
+            --bg-dark: #0f0f1a;
+            --bg-card: #1a1a2e;
+            --bg-card-hover: #252542;
+            --primary: #61dafb;
+            --secondary: #bb86fc;
+            --success: #4ade80;
+            --danger: #f87171;
+            --warning: #fbbf24;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --border: #2d2d4a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            padding: 2rem;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(97, 218, 251, 0.1) 0%, transparent 50%);
+            animation: pulse 4s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 0.5;
+            }
+
+            50% {
+                transform: scale(1.1);
+                opacity: 0.8;
+            }
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Section Styles */
+        .section {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-title .emoji {
+            font-size: 1.8rem;
+        }
+
+        /* Concept Cards */
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .concept-card {
+            background: linear-gradient(145deg, var(--bg-card-hover), var(--bg-card));
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .concept-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(97, 218, 251, 0.15);
+        }
+
+        .concept-card h3 {
+            color: var(--primary);
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Visualization Area */
+        .viz-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        @media (max-width: 900px) {
+            .viz-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .viz-panel {
+            background: var(--bg-dark);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 2px solid var(--border);
+            position: relative;
+        }
+
+        .viz-panel.wrong {
+            border-color: var(--danger);
+        }
+
+        .viz-panel.correct {
+            border-color: var(--success);
+        }
+
+        .viz-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .panel-label {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .panel-label.wrong {
+            color: var(--danger);
+        }
+
+        .panel-label.correct {
+            color: var(--success);
+        }
+
+        /* Tree Visualization */
+        .tree-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1rem 0;
+        }
+
+        .tree-level {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin: 0.5rem 0;
+            position: relative;
+        }
+
+        .tree-node {
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            min-width: 100px;
+            text-align: center;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .tree-node.highlight-update {
+            border-color: var(--warning);
+            box-shadow: 0 0 20px rgba(251, 191, 36, 0.4);
+            animation: nodeUpdate 0.5s ease;
+        }
+
+        .tree-node.highlight-delete {
+            border-color: var(--danger);
+            box-shadow: 0 0 20px rgba(248, 113, 113, 0.4);
+            animation: nodeDelete 0.5s ease;
+        }
+
+        .tree-node.highlight-insert {
+            border-color: var(--success);
+            box-shadow: 0 0 20px rgba(74, 222, 128, 0.4);
+            animation: nodeInsert 0.5s ease;
+        }
+
+        .tree-node.highlight-move {
+            border-color: var(--secondary);
+            box-shadow: 0 0 20px rgba(187, 134, 252, 0.4);
+            animation: nodeMove 0.5s ease;
+        }
+
+        @keyframes nodeUpdate {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        @keyframes nodeDelete {
+            0% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            100% {
+                opacity: 0.5;
+                transform: scale(0.9);
+            }
+        }
+
+        @keyframes nodeInsert {
+            0% {
+                opacity: 0;
+                transform: scale(0.5);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes nodeMove {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-10px);
+            }
+
+            75% {
+                transform: translateX(10px);
+            }
+        }
+
+        .node-type {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+        }
+
+        .node-key {
+            font-size: 0.65rem;
+            color: var(--secondary);
+            background: rgba(187, 134, 252, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-top: 0.25rem;
+            display: inline-block;
+        }
+
+        .node-content {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .node-input {
+            margin-top: 0.5rem;
+            padding: 4px 8px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: var(--bg-dark);
+            color: var(--text);
+            font-size: 0.8rem;
+            width: 80px;
+        }
+
+        /* List Items */
+        .list-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .list-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            padding: 1rem;
+            transition: all 0.4s ease;
+            position: relative;
+        }
+
+        .list-item.animating {
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .list-item .index {
+            width: 30px;
+            height: 30px;
+            background: var(--bg-dark);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .list-item .item-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .list-item .emoji-avatar {
+            font-size: 1.5rem;
+        }
+
+        .list-item .name {
+            font-weight: 600;
+        }
+
+        .list-item .key-badge {
+            font-size: 0.7rem;
+            padding: 3px 8px;
+            border-radius: 20px;
+            background: rgba(97, 218, 251, 0.15);
+            color: var(--primary);
+            margin-left: auto;
+        }
+
+        .list-item .key-badge.index-key {
+            background: rgba(248, 113, 113, 0.15);
+            color: var(--danger);
+        }
+
+        .list-item input {
+            padding: 6px 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg-dark);
+            color: var(--text);
+            font-size: 0.85rem;
+            width: 150px;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin: 1.5rem 0;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), #4fc3f7);
+            color: #000;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(97, 218, 251, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger), #ef5350);
+            color: #fff;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(248, 113, 113, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg-card-hover);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+        }
+
+        /* Diff Log */
+        .diff-log {
+            background: var(--bg-dark);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-top: 1.5rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .diff-log-title {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .diff-entry {
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .diff-entry.update {
+            background: rgba(251, 191, 36, 0.15);
+            border-left: 3px solid var(--warning);
+        }
+
+        .diff-entry.delete {
+            background: rgba(248, 113, 113, 0.15);
+            border-left: 3px solid var(--danger);
+        }
+
+        .diff-entry.insert {
+            background: rgba(74, 222, 128, 0.15);
+            border-left: 3px solid var(--success);
+        }
+
+        .diff-entry.move {
+            background: rgba(187, 134, 252, 0.15);
+            border-left: 3px solid var(--secondary);
+        }
+
+        .diff-entry.reuse {
+            background: rgba(97, 218, 251, 0.15);
+            border-left: 3px solid var(--primary);
+        }
+
+        .diff-entry.bug {
+            background: rgba(248, 113, 113, 0.25);
+            border-left: 3px solid var(--danger);
+        }
+
+        /* Algorithm Steps */
+        .algorithm-steps {
+            display: grid;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .step {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+            padding: 1rem;
+            background: var(--bg-dark);
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            opacity: 0.5;
+            transition: all 0.3s ease;
+        }
+
+        .step.active {
+            opacity: 1;
+            border-color: var(--primary);
+            background: rgba(97, 218, 251, 0.05);
+        }
+
+        .step.completed {
+            opacity: 1;
+        }
+
+        .step.completed::before {
+            content: '✓';
+            color: var(--success);
+        }
+
+        .step-number {
+            width: 32px;
+            height: 32px;
+            background: var(--bg-card);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .step.active .step-number {
+            background: var(--primary);
+            color: #000;
+        }
+
+        .step-content h4 {
+            margin-bottom: 0.25rem;
+        }
+
+        .step-content p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        /* Comparison Table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .comparison-table th {
+            background: var(--bg-dark);
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .comparison-table tr:hover td {
+            background: var(--bg-card-hover);
+        }
+
+        /* Speed Indicator */
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--bg-dark);
+            border-radius: 10px;
+            margin-bottom: 1rem;
+        }
+
+        .speed-control label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .speed-control input[type="range"] {
+            flex: 1;
+            max-width: 200px;
+        }
+
+        /* Legend */
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--bg-dark);
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+        }
+
+        .legend-color.reuse {
+            background: var(--primary);
+        }
+
+        .legend-color.update {
+            background: var(--warning);
+        }
+
+        .legend-color.insert {
+            background: var(--success);
+        }
+
+        .legend-color.delete {
+            background: var(--danger);
+        }
+
+        .legend-color.move {
+            background: var(--secondary);
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 0.5rem;
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1rem;
+            border-radius: 8px 8px 0 0;
+            transition: all 0.3s ease;
+        }
+
+        .tab:hover {
+            color: var(--text);
+            background: var(--bg-card-hover);
+        }
+
+        .tab.active {
+            color: var(--primary);
+            background: var(--bg-card-hover);
+            border-bottom: 2px solid var(--primary);
+            margin-bottom: -2px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Info Box */
+        .info-box {
+            background: linear-gradient(135deg, rgba(97, 218, 251, 0.1), rgba(187, 134, 252, 0.1));
+            border: 1px solid var(--primary);
+            border-radius: 10px;
+            padding: 1rem 1.25rem;
+            margin: 1rem 0;
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-start;
+        }
+
+        .info-box .icon {
+            font-size: 1.2rem;
+        }
+
+        .warning-box {
+            background: rgba(248, 113, 113, 0.1);
+            border-color: var(--danger);
+        }
+
+        /* Visual DOM */
+        .dom-preview {
+            background: #1e1e2e;
+            border-radius: 10px;
+            padding: 1rem;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 0.85rem;
+            overflow-x: auto;
+        }
+
+        .dom-element {
+            padding-left: 1.5rem;
+        }
+
+        .dom-tag {
+            color: var(--danger);
+        }
+
+        .dom-attr {
+            color: var(--warning);
+        }
+
+        .dom-value {
+            color: var(--success);
+        }
+
+        .dom-text {
+            color: var(--text);
+        }
+
+        /* Memory Visualization */
+        .memory-viz {
+            display: flex;
+            gap: 2rem;
+            padding: 1rem;
+            background: var(--bg-dark);
+            border-radius: 10px;
+            overflow-x: auto;
+        }
+
+        .memory-block {
+            min-width: 180px;
+            padding: 1rem;
+            background: var(--bg-card);
+            border-radius: 8px;
+            border: 2px solid var(--border);
+        }
+
+        .memory-block-title {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+
+        .memory-pointer {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            margin: 0.25rem 0;
+        }
+
+        .memory-pointer .arrow {
+            color: var(--secondary);
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            background: var(--bg-dark);
+            border-radius: 20px;
+            height: 8px;
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 20px;
+            transition: width 0.3s ease;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border);
+            margin-top: 2rem;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <h1>⚛️ React Reconciliation Visualizer</h1>
+        <p>Interactive demonstration of the Diffing Algorithm with the classic "Key" trap 🪤</p>
+    </header>
+
+    <div class="container">
+        <!-- Concept Overview -->
+        <section class="section">
+            <h2 class="section-title"><span class="emoji">🧠</span> Core Concepts</h2>
+            <div class="concept-grid">
+                <div class="concept-card">
+                    <h3>🌳 Virtual DOM</h3>
+                    <p>A lightweight JavaScript representation of the actual DOM. React creates a new Virtual DOM tree
+                        on every render.</p>
+                </div>
+                <div class="concept-card">
+                    <h3>⚖️ Diffing Algorithm</h3>
+                    <p>Compares the new Virtual DOM with the previous one. Uses <strong>O(n)</strong> heuristics instead
+                        of O(n³) tree comparison.</p>
+                </div>
+                <div class="concept-card">
+                    <h3>🔑 Keys</h3>
+                    <p>Unique identifiers that help React track element identity across re-renders. Critical for lists!
+                    </p>
+                </div>
+                <div class="concept-card">
+                    <h3>🎯 Minimal DOM Ops</h3>
+                    <p>The goal: compute the smallest set of changes to transform the old DOM into the new one. DOM
+                        operations are expensive!</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- The Tricky Example -->
+        <section class="section">
+            <h2 class="section-title"><span class="emoji">🪤</span> The Classic Trap: Index as Key</h2>
+
+            <div class="info-box warning-box">
+                <span class="icon">⚠️</span>
+                <div>
+                    <strong>The Scenario:</strong> You have a list of users. Each has an input field. You delete the
+                    first user.
+                    <br><strong>The Bug:</strong> Using index as key causes React to mismatch state with data!
+                </div>
+            </div>
+
+            <div class="legend">
+                <div class="legend-item"><span class="legend-color reuse"></span> Reused (no change)</div>
+                <div class="legend-item"><span class="legend-color update"></span> Updated</div>
+                <div class="legend-item"><span class="legend-color insert"></span> Inserted</div>
+                <div class="legend-item"><span class="legend-color delete"></span> Deleted</div>
+                <div class="legend-item"><span class="legend-color move"></span> Moved</div>
+            </div>
+
+            <div class="controls">
+                <button class="btn btn-danger" onclick="deleteFirstUser()">
+                    🗑️ Delete First User
+                </button>
+                <button class="btn btn-primary" onclick="addUserToStart()">
+                    ➕ Add User to Start
+                </button>
+                <button class="btn btn-secondary" onclick="resetDemo()">
+                    🔄 Reset Demo
+                </button>
+            </div>
+
+            <div class="speed-control">
+                <label>⏱️ Animation Speed:</label>
+                <input type="range" id="speed" min="100" max="2000" value="800">
+                <span id="speedValue">800ms</span>
+            </div>
+
+            <div class="viz-container">
+                <!-- Wrong Way: Index as Key -->
+                <div class="viz-panel wrong">
+                    <div class="viz-panel-header">
+                        <span class="panel-label wrong">❌ Using Index as Key</span>
+                        <code style="font-size: 0.75rem; color: var(--text-muted);">key={index}</code>
+                    </div>
+                    <div id="wrong-list" class="list-container"></div>
+                    <div class="diff-log">
+                        <div class="diff-log-title">📋 Reconciliation Log</div>
+                        <div id="wrong-log"></div>
+                    </div>
+                </div>
+
+                <!-- Correct Way: ID as Key -->
+                <div class="viz-panel correct">
+                    <div class="viz-panel-header">
+                        <span class="panel-label correct">✅ Using ID as Key</span>
+                        <code style="font-size: 0.75rem; color: var(--text-muted);">key={user.id}</code>
+                    </div>
+                    <div id="correct-list" class="list-container"></div>
+                    <div class="diff-log">
+                        <div class="diff-log-title">📋 Reconciliation Log</div>
+                        <div id="correct-log"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step-by-Step Algorithm -->
+        <section class="section">
+            <h2 class="section-title"><span class="emoji">🔬</span> Step-by-Step: What React Does</h2>
+
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('wrong-algo')">❌ Index Key Algorithm</button>
+                <button class="tab" onclick="switchTab('correct-algo')">✅ ID Key Algorithm</button>
+            </div>
+
+            <div id="wrong-algo" class="tab-content active">
+                <div class="algorithm-steps" id="wrong-steps">
+                    <div class="step" data-step="1">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h4>Compare key="0"</h4>
+                            <p>Old: Alice 👩 → New: Bob 👨. Key matches! React REUSES the element and updates props.</p>
+                        </div>
+                    </div>
+                    <div class="step" data-step="2">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h4>Compare key="1"</h4>
+                            <p>Old: Bob 👨 → New: Charlie 🧑. Key matches! React REUSES and updates.</p>
+                        </div>
+                    </div>
+                    <div class="step" data-step="3">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h4>Check for key="2"</h4>
+                            <p>Old: Charlie 🧑 → New: (nothing). Key "2" no longer exists. DELETE this element.</p>
+                        </div>
+                    </div>
+                    <div class="step" data-step="4">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <h4>🐛 THE BUG!</h4>
+                            <p>Input fields are reused but contain OLD values! The DOM element at position 0 still has
+                                "Alice's notes" but now shows Bob's data!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="correct-algo" class="tab-content">
+                <div class="algorithm-steps" id="correct-steps">
+                    <div class="step" data-step="1">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h4>Compare key="alice-1"</h4>
+                            <p>Old: Alice 👩 with key="alice-1" → New: Not found with this key. Mark for DELETION.</p>
+                        </div>
+                    </div>
+                    <div class="step" data-step="2">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h4>Compare key="bob-2"</h4>
+                            <p>Old: Bob 👨 at position 1 → New: Bob 👨 at position 0. SAME key! MOVE element (reuse with
+                                all state intact).</p>
+                        </div>
+                    </div>
+                    <div class="step" data-step="3">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h4>Compare key="charlie-3"</h4>
+                            <p>Old: Charlie 🧑 at position 2 → New: Charlie 🧑 at position 1. SAME key! MOVE element.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="step" data-step="4">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <h4>✨ Correct Result!</h4>
+                            <p>Alice's element is deleted. Bob and Charlie's elements MOVE but keep their input values
+                                intact!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Memory Model Visualization -->
+        <section class="section">
+            <h2 class="section-title"><span class="emoji">💾</span> Fiber Node Visual: What React "Sees"</h2>
+
+            <div class="tabs">
+                <button class="tab active" onclick="switchMemoryTab('before')">Before Delete</button>
+                <button class="tab" onclick="switchMemoryTab('after-wrong')">After (Wrong Key)</button>
+                <button class="tab" onclick="switchMemoryTab('after-correct')">After (Correct Key)</button>
+            </div>
+
+            <div id="before" class="tab-content active">
+                <div class="memory-viz">
+                    <div class="memory-block">
+                        <div class="memory-block-title">Fiber 0</div>
+                        <div>key: "0" / "alice-1"</div>
+                        <div>type: ListItem</div>
+                        <div>data: Alice 👩</div>
+                        <div style="color: var(--warning);">input.value: "Alice's notes"</div>
+                    </div>
+                    <div class="memory-block">
+                        <div class="memory-block-title">Fiber 1</div>
+                        <div>key: "1" / "bob-2"</div>
+                        <div>type: ListItem</div>
+                        <div>data: Bob 👨</div>
+                        <div style="color: var(--warning);">input.value: "Bob's notes"</div>
+                    </div>
+                    <div class="memory-block">
+                        <div class="memory-block-title">Fiber 2</div>
+                        <div>key: "2" / "charlie-3"</div>
+                        <div>type: ListItem</div>
+                        <div>data: Charlie 🧑</div>
+                        <div style="color: var(--warning);">input.value: "Charlie's notes"</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="after-wrong" class="tab-content">
+                <div class="memory-viz">
+                    <div class="memory-block" style="border-color: var(--danger);">
+                        <div class="memory-block-title" style="color: var(--danger);">Fiber 0 (REUSED!)</div>
+                        <div>key: "0" (same key)</div>
+                        <div>type: ListItem</div>
+                        <div>data: Bob 👨 (changed!)</div>
+                        <div style="color: var(--danger);">input.value: "Alice's notes" 🐛</div>
+                        <div style="font-size: 0.7rem; color: var(--danger); margin-top: 0.5rem;">
+                            ⚠️ DOM element reused, input state preserved!
+                        </div>
+                    </div>
+                    <div class="memory-block" style="border-color: var(--danger);">
+                        <div class="memory-block-title" style="color: var(--danger);">Fiber 1 (REUSED!)</div>
+                        <div>key: "1" (same key)</div>
+                        <div>type: ListItem</div>
+                        <div>data: Charlie 🧑 (changed!)</div>
+                        <div style="color: var(--danger);">input.value: "Bob's notes" 🐛</div>
+                    </div>
+                    <div class="memory-block" style="opacity: 0.3; border-style: dashed;">
+                        <div class="memory-block-title">Fiber 2 (DELETED)</div>
+                        <div style="text-decoration: line-through;">key: "2"</div>
+                        <div style="text-decoration: line-through;">data: Charlie 🧑</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="after-correct" class="tab-content">
+                <div class="memory-viz">
+                    <div class="memory-block" style="opacity: 0.3; border-style: dashed;">
+                        <div class="memory-block-title" style="color: var(--danger);">Fiber "alice-1" (DELETED)</div>
+                        <div style="text-decoration: line-through;">key: "alice-1"</div>
+                        <div style="text-decoration: line-through;">data: Alice 👩</div>
+                    </div>
+                    <div class="memory-block" style="border-color: var(--success);">
+                        <div class="memory-block-title" style="color: var(--success);">Fiber "bob-2" (MOVED)</div>
+                        <div>key: "bob-2" ✓</div>
+                        <div>type: ListItem</div>
+                        <div>data: Bob 👨 ✓</div>
+                        <div style="color: var(--success);">input.value: "Bob's notes" ✓</div>
+                    </div>
+                    <div class="memory-block" style="border-color: var(--success);">
+                        <div class="memory-block-title" style="color: var(--success);">Fiber "charlie-3" (MOVED)</div>
+                        <div>key: "charlie-3" ✓</div>
+                        <div>type: ListItem</div>
+                        <div>data: Charlie 🧑 ✓</div>
+                        <div style="color: var(--success);">input.value: "Charlie's notes" ✓</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Key Takeaways -->
+        <section class="section">
+            <h2 class="section-title"><span class="emoji">🎯</span> Key Takeaways for Interviews</h2>
+
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Aspect</th>
+                        <th>❌ Index as Key</th>
+                        <th>✅ Stable ID as Key</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Identity Tracking</td>
+                        <td>Position-based (breaks on reorder)</td>
+                        <td>Content-based (stable)</td>
+                    </tr>
+                    <tr>
+                        <td>On Delete First Item</td>
+                        <td>Shifts all indices, reuses wrong DOM nodes</td>
+                        <td>Correctly identifies which item to delete</td>
+                    </tr>
+                    <tr>
+                        <td>Input State</td>
+                        <td>🐛 Misaligned with data</td>
+                        <td>✓ Correctly preserved</td>
+                    </tr>
+                    <tr>
+                        <td>Performance</td>
+                        <td>More DOM operations (updates instead of moves)</td>
+                        <td>Minimal operations (moves only)</td>
+                    </tr>
+                    <tr>
+                        <td>Use Case</td>
+                        <td>Static lists only (no add/remove/reorder)</td>
+                        <td>All dynamic lists</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="info-box">
+                <span class="icon">💡</span>
+                <div>
+                    <strong>The One-Liner for Interviews:</strong><br>
+                    "Keys tell React which element is which. Using index as key makes React match elements by position
+                    rather than identity, causing state to become misaligned when the list changes."
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <footer class="footer">
+        <p>Built for FAANG Interview Prep 🚀 | React Reconciliation Deep Dive</p>
+    </footer>
+
+    <script>
+        // Initial data
+        const initialUsers = [
+            { id: 'alice-1', name: 'Alice', emoji: '👩', notes: "Alice's notes" },
+            { id: 'bob-2', name: 'Bob', emoji: '👨', notes: "Bob's notes" },
+            { id: 'charlie-3', name: 'Charlie', emoji: '🧑', notes: "Charlie's notes" }
+        ];
+
+        let wrongUsers = [...initialUsers];
+        let correctUsers = [...initialUsers];
+        let wrongInputValues = initialUsers.map(u => u.notes);
+        let correctInputValues = {};
+        initialUsers.forEach(u => correctInputValues[u.id] = u.notes);
+
+        const speedSlider = document.getElementById('speed');
+        const speedValue = document.getElementById('speedValue');
+        speedSlider.addEventListener('input', (e) => {
+            speedValue.textContent = e.target.value + 'ms';
+        });
+
+        function getAnimationSpeed() {
+            return parseInt(speedSlider.value);
+        }
+
+        // Render functions
+        function renderWrongList(highlight = null) {
+            const container = document.getElementById('wrong-list');
+            container.innerHTML = wrongUsers.map((user, index) => `
+                <div class="list-item ${highlight === index ? 'highlight-' + highlight.type : ''}" 
+                     data-index="${index}" 
+                     style="transform: translateY(0);">
+                    <div class="index">${index}</div>
+                    <div class="item-content">
+                        <span class="emoji-avatar">${user.emoji}</span>
+                        <span class="name">${user.name}</span>
+                        <input type="text" value="${wrongInputValues[index] || ''}" 
+                               onchange="updateWrongInput(${index}, this.value)"
+                               placeholder="Notes...">
+                    </div>
+                    <span class="key-badge index-key">key={${index}}</span>
+                </div>
+            `).join('');
+        }
+
+        function renderCorrectList(highlight = null) {
+            const container = document.getElementById('correct-list');
+            container.innerHTML = correctUsers.map((user, index) => `
+                <div class="list-item ${highlight?.id === user.id ? 'highlight-' + highlight.type : ''}" 
+                     data-id="${user.id}"
+                     style="transform: translateY(0);">
+                    <div class="index">${index}</div>
+                    <div class="item-content">
+                        <span class="emoji-avatar">${user.emoji}</span>
+                        <span class="name">${user.name}</span>
+                        <input type="text" value="${correctInputValues[user.id] || ''}" 
+                               onchange="updateCorrectInput('${user.id}', this.value)"
+                               placeholder="Notes...">
+                    </div>
+                    <span class="key-badge">key="${user.id}"</span>
+                </div>
+            `).join('');
+        }
+
+        function updateWrongInput(index, value) {
+            wrongInputValues[index] = value;
+        }
+
+        function updateCorrectInput(id, value) {
+            correctInputValues[id] = value;
+        }
+
+        function addLog(containerId, message, type) {
+            const log = document.getElementById(containerId);
+            const entry = document.createElement('div');
+            entry.className = `diff-entry ${type}`;
+            entry.innerHTML = message;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function clearLogs() {
+            document.getElementById('wrong-log').innerHTML = '';
+            document.getElementById('correct-log').innerHTML = '';
+        }
+
+        async function animateStep(stepNumber, containerId) {
+            const steps = document.querySelectorAll(`#${containerId} .step`);
+            steps.forEach(step => step.classList.remove('active'));
+            if (steps[stepNumber - 1]) {
+                steps[stepNumber - 1].classList.add('active');
+            }
+            await sleep(getAnimationSpeed());
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        async function deleteFirstUser() {
+            if (wrongUsers.length <= 1) return;
+
+            clearLogs();
+            const speed = getAnimationSpeed();
+            const deletedUser = wrongUsers[0];
+
+            // Animate wrong side
+            addLog('wrong-log', `🔍 React compares old key="0" with new key="0"`, 'reuse');
+            await animateStep(1, 'wrong-steps');
+
+            // Show the wrong reuse
+            await sleep(speed / 2);
+            addLog('wrong-log', `♻️ key="0" matches! REUSE element, update props: ${wrongUsers[0].name} → ${wrongUsers[1].name}`, 'update');
+
+            await animateStep(2, 'wrong-steps');
+            await sleep(speed / 2);
+            addLog('wrong-log', `♻️ key="1" matches! REUSE element, update props: ${wrongUsers[1].name} → ${wrongUsers[2]?.name || 'n/a'}`, 'update');
+
+            if (wrongUsers.length > 2) {
+                await animateStep(3, 'wrong-steps');
+                await sleep(speed / 2);
+                addLog('wrong-log', `🗑️ key="${wrongUsers.length - 1}" no longer exists in new list. DELETE.`, 'delete');
+            }
+
+            await animateStep(4, 'wrong-steps');
+            addLog('wrong-log', `🐛 BUG: Input from position 0 still shows "${wrongInputValues[0]}" but now displays ${wrongUsers[1].name}!`, 'bug');
+
+            // Actually update wrong list (simulating the bug)
+            wrongUsers = wrongUsers.slice(1);
+            // Inputs SHIFT but values stay at old indices - this is the bug!
+            renderWrongList();
+
+            // Animate correct side
+            addLog('correct-log', `🔍 React looks for key="${deletedUser.id}" in new list...`, 'reuse');
+            await animateStep(1, 'correct-steps');
+            await sleep(speed / 2);
+            addLog('correct-log', `🗑️ key="${deletedUser.id}" not found! DELETE ${deletedUser.name}'s element.`, 'delete');
+
+            await animateStep(2, 'correct-steps');
+            await sleep(speed / 2);
+            const secondUser = correctUsers[1];
+            addLog('correct-log', `🔄 key="${secondUser.id}" found at new position 0. MOVE element (preserve all state!)`, 'move');
+
+            if (correctUsers.length > 2) {
+                await animateStep(3, 'correct-steps');
+                await sleep(speed / 2);
+                const thirdUser = correctUsers[2];
+                addLog('correct-log', `🔄 key="${thirdUser.id}" found at new position 1. MOVE element.`, 'move');
+            }
+
+            await animateStep(4, 'correct-steps');
+            addLog('correct-log', `✅ Correct: Each input keeps its own value! Bob still has "Bob's notes".`, 'insert');
+
+            // Update correct list properly
+            correctUsers = correctUsers.slice(1);
+            renderCorrectList();
+        }
+
+        async function addUserToStart() {
+            clearLogs();
+            const speed = getAnimationSpeed();
+
+            const newId = 'new-' + Date.now();
+            const newUser = { id: newId, name: 'Diana', emoji: '👸', notes: '' };
+
+            // Wrong side
+            addLog('wrong-log', `➕ New list has key="0" with Diana`, 'insert');
+            await sleep(speed);
+            addLog('wrong-log', `🔍 Old key="0" was ${wrongUsers[0]?.name || 'empty'}. Key matches! REUSE & update props.`, 'update');
+            await sleep(speed);
+            addLog('wrong-log', `🐛 All elements shift. Input values now misaligned!`, 'bug');
+
+            // Actually add to wrong list
+            wrongInputValues.unshift('');
+            wrongUsers = [newUser, ...wrongUsers];
+            renderWrongList();
+
+            // Correct side
+            addLog('correct-log', `➕ New element with key="${newId}" doesn't exist in old tree.`, 'insert');
+            await sleep(speed);
+            addLog('correct-log', `✨ CREATE new element for Diana at position 0.`, 'insert');
+            await sleep(speed);
+            addLog('correct-log', `✅ Existing elements keep their keys and positions shift naturally!`, 'reuse');
+
+            // Add to correct list
+            correctInputValues[newId] = '';
+            correctUsers = [newUser, ...correctUsers];
+            renderCorrectList();
+        }
+
+        function resetDemo() {
+            wrongUsers = [...initialUsers];
+            correctUsers = [...initialUsers];
+            wrongInputValues = initialUsers.map(u => u.notes);
+            correctInputValues = {};
+            initialUsers.forEach(u => correctInputValues[u.id] = u.notes);
+
+            clearLogs();
+            renderWrongList();
+            renderCorrectList();
+
+            // Reset step highlights
+            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+        }
+
+        // Tab switching
+        function switchTab(tabId) {
+            document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.algorithm-steps').forEach(c => c.closest('.tab-content')?.classList.remove('active'));
+
+            event.target.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        function switchMemoryTab(tabId) {
+            const container = event.target.closest('.section');
+            container.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('active'));
+            container.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+            event.target.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        // Initialize
+        renderWrongList();
+        renderCorrectList();
+    </script>
+</body>
+
+</html>
