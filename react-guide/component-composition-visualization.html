@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧩 React Component Composition Patterns - Interactive Visualizer</title>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --bg-code: #0d1117;
+            --accent-primary: #818cf8;
+            --accent-secondary: #34d399;
+            --accent-warning: #fbbf24;
+            --accent-danger: #f87171;
+            --accent-info: #38bdf8;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border-color: #334155;
+            --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-3: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 3rem 0;
+            background: linear-gradient(180deg, rgba(129, 140, 248, 0.1) 0%, transparent 100%);
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 3rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        /* Navigation Tabs */
+        .nav-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 3rem;
+            flex-wrap: wrap;
+        }
+
+        .nav-tab {
+            padding: 1rem 2rem;
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .nav-tab:hover {
+            border-color: var(--accent-primary);
+            transform: translateY(-2px);
+        }
+
+        .nav-tab.active {
+            background: var(--gradient-1);
+            border-color: transparent;
+            color: white;
+            box-shadow: 0 10px 40px rgba(129, 140, 248, 0.3);
+        }
+
+        /* Section Container */
+        .section {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .card-header h2 {
+            font-size: 1.5rem;
+        }
+
+        .card-header .emoji {
+            font-size: 2rem;
+        }
+
+        /* Code Block */
+        .code-block {
+            background: var(--bg-code);
+            border-radius: 12px;
+            padding: 1.5rem;
+            overflow-x: auto;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 0.9rem;
+            line-height: 1.8;
+            border: 1px solid var(--border-color);
+        }
+
+        .code-block .keyword {
+            color: #ff79c6;
+        }
+
+        .code-block .function {
+            color: #50fa7b;
+        }
+
+        .code-block .string {
+            color: #f1fa8c;
+        }
+
+        .code-block .comment {
+            color: #6272a4;
+        }
+
+        .code-block .tag {
+            color: #ff79c6;
+        }
+
+        .code-block .attr {
+            color: #50fa7b;
+        }
+
+        .code-block .value {
+            color: #f1fa8c;
+        }
+
+        .code-block .component {
+            color: #8be9fd;
+        }
+
+        /* Visualization Area */
+        .viz-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        @media (max-width: 900px) {
+            .viz-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .viz-panel {
+            background: var(--bg-code);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            min-height: 400px;
+        }
+
+        .viz-panel h3 {
+            color: var(--accent-primary);
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Component Visual */
+        .component-visual {
+            background: linear-gradient(135deg, rgba(129, 140, 248, 0.1) 0%, rgba(52, 211, 153, 0.1) 100%);
+            border: 2px dashed var(--accent-primary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            position: relative;
+        }
+
+        .component-label {
+            position: absolute;
+            top: -12px;
+            left: 20px;
+            background: var(--accent-primary);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .slot-area {
+            background: rgba(52, 211, 153, 0.15);
+            border: 2px dashed var(--accent-secondary);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .slot-label {
+            color: var(--accent-secondary);
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        /* Animation Classes */
+        .animate-slot {
+            animation: slotFill 0.5s ease forwards;
+        }
+
+        @keyframes slotFill {
+            0% {
+                background: rgba(52, 211, 153, 0.15);
+            }
+
+            50% {
+                background: rgba(52, 211, 153, 0.4);
+                transform: scale(1.02);
+            }
+
+            100% {
+                background: rgba(52, 211, 153, 0.25);
+            }
+        }
+
+        .content-injected {
+            background: var(--bg-card);
+            border-radius: 8px;
+            padding: 0.75rem 1.25rem;
+            color: var(--text-primary);
+            animation: contentAppear 0.4s ease;
+        }
+
+        @keyframes contentAppear {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+
+        .btn-primary {
+            background: var(--gradient-1);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(129, 140, 248, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 2px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent-primary);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            margin: 1.5rem 0;
+            flex-wrap: wrap;
+        }
+
+        /* Flow Diagram */
+        .flow-diagram {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            padding: 2rem;
+        }
+
+        .flow-node {
+            background: var(--bg-card);
+            border: 2px solid var(--accent-primary);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            text-align: center;
+            min-width: 120px;
+        }
+
+        .flow-arrow {
+            color: var(--accent-secondary);
+            font-size: 1.5rem;
+            animation: arrowPulse 1.5s ease infinite;
+        }
+
+        @keyframes arrowPulse {
+
+            0%,
+            100% {
+                opacity: 0.5;
+                transform: translateX(0);
+            }
+
+            50% {
+                opacity: 1;
+                transform: translateX(5px);
+            }
+        }
+
+        /* Compound Component Demo */
+        .tabs-demo {
+            background: var(--bg-card);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        .tabs-list {
+            display: flex;
+            background: var(--bg-dark);
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 1rem;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            position: relative;
+        }
+
+        .tab-button:hover {
+            color: var(--text-primary);
+        }
+
+        .tab-button.active {
+            color: var(--accent-primary);
+            background: var(--bg-card);
+        }
+
+        .tab-button.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--accent-primary);
+        }
+
+        .tab-panel {
+            padding: 1.5rem;
+            display: none;
+            animation: panelFade 0.3s ease;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        @keyframes panelFade {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* Context Flow */
+        .context-flow {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem;
+        }
+
+        .context-provider {
+            background: linear-gradient(135deg, rgba(129, 140, 248, 0.3) 0%, rgba(129, 140, 248, 0.1) 100%);
+            border: 2px solid var(--accent-primary);
+            border-radius: 16px;
+            padding: 1.5rem;
+            width: 100%;
+            position: relative;
+        }
+
+        .context-provider::before {
+            content: '🔮 Context Provider';
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--accent-primary);
+            color: white;
+            padding: 0.25rem 1rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .context-consumer {
+            background: rgba(52, 211, 153, 0.2);
+            border: 2px dashed var(--accent-secondary);
+            border-radius: 12px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .context-consumer:hover {
+            background: rgba(52, 211, 153, 0.3);
+            transform: scale(1.02);
+        }
+
+        .data-flow-line {
+            width: 2px;
+            height: 30px;
+            background: linear-gradient(to bottom, var(--accent-primary), var(--accent-secondary));
+            position: relative;
+        }
+
+        .data-flow-line::after {
+            content: '▼';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: var(--accent-secondary);
+            animation: bounce 1s ease infinite;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            100% {
+                transform: translateX(-50%) translateY(0);
+            }
+
+            50% {
+                transform: translateX(-50%) translateY(5px);
+            }
+        }
+
+        /* Highlight Box */
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(251, 191, 36, 0.05) 100%);
+            border-left: 4px solid var(--accent-warning);
+            padding: 1rem 1.5rem;
+            border-radius: 0 12px 12px 0;
+            margin: 1rem 0;
+        }
+
+        .highlight-box h4 {
+            color: var(--accent-warning);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Step Indicator */
+        .steps {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .step {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+            padding: 1rem;
+            background: var(--bg-code);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .step.active {
+            border-color: var(--accent-primary);
+            background: rgba(129, 140, 248, 0.1);
+        }
+
+        .step-number {
+            width: 32px;
+            height: 32px;
+            background: var(--accent-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .step-content h4 {
+            margin-bottom: 0.25rem;
+        }
+
+        .step-content p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* Legend */
+        .legend {
+            display: flex;
+            gap: 2rem;
+            padding: 1rem;
+            background: var(--bg-code);
+            border-radius: 12px;
+            margin: 1rem 0;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+        }
+
+        /* Interactive Demo */
+        .demo-output {
+            background: var(--bg-code);
+            border-radius: 12px;
+            padding: 1.5rem;
+            min-height: 200px;
+            border: 1px solid var(--border-color);
+        }
+
+        .demo-controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        /* Transformation Animation */
+        .transform-container {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            padding: 2rem;
+            overflow-x: auto;
+        }
+
+        .transform-box {
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            min-width: 280px;
+            flex-shrink: 0;
+        }
+
+        .transform-arrow {
+            font-size: 2rem;
+            color: var(--accent-primary);
+            animation: arrowPulse 1.5s ease infinite;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border-color);
+            margin-top: 3rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>🧩 Component Composition Patterns</h1>
+        <p>Interactive visualization of children prop, slots, and compound components</p>
+    </div>
+
+    <div class="container">
+        <!-- Navigation -->
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showSection('children')">
+                📦 Children Prop
+            </button>
+            <button class="nav-tab" onclick="showSection('slots')">
+                🎰 Named Slots
+            </button>
+            <button class="nav-tab" onclick="showSection('compound')">
+                🔗 Compound Components
+            </button>
+            <button class="nav-tab" onclick="showSection('tricky')">
+                🎯 Tricky Example
+            </button>
+        </div>
+
+        <!-- Section 1: Children Prop -->
+        <section id="children" class="section active">
+            <div class="card">
+                <div class="card-header">
+                    <span class="emoji">📦</span>
+                    <h2>The Children Prop - React's Default Slot</h2>
+                </div>
+
+                <div class="highlight-box">
+                    <h4>💡 The "Aha Moment"</h4>
+                    <p><code>children</code> is just a prop! When you write
+                        <code>&lt;Parent&gt;&lt;Child/&gt;&lt;/Parent&gt;</code>,
+                        React transforms it to <code>Parent({ children: &lt;Child/&gt; })</code></p>
+                </div>
+
+                <div class="viz-container">
+                    <div class="viz-panel">
+                        <h3>📝 JSX Code</h3>
+                        <div class="code-block">
+                            <span class="comment">// What you write:</span>
+                            <span class="tag">&lt;</span><span class="component">Card</span> <span
+                                class="attr">title</span>=<span class="string">"Welcome"</span><span
+                                class="tag">&gt;</span>
+                            <span class="tag">&lt;</span><span class="component">p</span><span
+                                class="tag">&gt;</span>Hello World!<span class="tag">&lt;/</span><span
+                                class="component">p</span><span class="tag">&gt;</span>
+                            <span class="tag">&lt;</span><span class="component">button</span><span
+                                class="tag">&gt;</span>Click Me<span class="tag">&lt;/</span><span
+                                class="component">button</span><span class="tag">&gt;</span>
+                            <span class="tag">&lt;/</span><span class="component">Card</span><span
+                                class="tag">&gt;</span>
+                        </div>
+
+                        <div class="btn-group">
+                            <button class="btn btn-primary" onclick="animateChildrenDemo()">
+                                ▶️ Animate Transformation
+                            </button>
+                            <button class="btn btn-secondary" onclick="resetChildrenDemo()">
+                                🔄 Reset
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="viz-panel">
+                        <h3>🎨 Visual Representation</h3>
+                        <div id="children-demo">
+                            <div class="component-visual">
+                                <span class="component-label">Card Component</span>
+                                <div style="padding: 0.5rem; color: var(--text-secondary);">
+                                    <strong>Title:</strong> "Welcome"
+                                </div>
+                                <div class="slot-area" id="children-slot">
+                                    <span class="slot-label">{children} slot - waiting for content...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Flow Diagram -->
+                <h3 style="margin: 2rem 0 1rem;">🔄 JSX to Props Transformation</h3>
+                <div class="transform-container">
+                    <div class="transform-box">
+                        <h4 style="color: var(--accent-primary); margin-bottom: 1rem;">JSX Syntax</h4>
+                        <div class="code-block" style="font-size: 0.8rem;">
+                            <span class="tag">&lt;</span><span class="component">Card</span><span
+                                class="tag">&gt;</span>
+                            <span class="tag">&lt;</span><span class="component">Content</span> <span
+                                class="tag">/&gt;</span>
+                            <span class="tag">&lt;/</span><span class="component">Card</span><span
+                                class="tag">&gt;</span>
+                        </div>
+                    </div>
+                    <span class="transform-arrow">→</span>
+                    <div class="transform-box">
+                        <h4 style="color: var(--accent-secondary); margin-bottom: 1rem;">Babel Transform</h4>
+                        <div class="code-block" style="font-size: 0.8rem;">
+                            <span class="function">React.createElement</span>(
+                            <span class="component">Card</span>,
+                            <span class="keyword">null</span>,
+                            <span class="tag">&lt;</span><span class="component">Content</span> <span
+                                class="tag">/&gt;</span>
+                            )
+                        </div>
+                    </div>
+                    <span class="transform-arrow">→</span>
+                    <div class="transform-box">
+                        <h4 style="color: var(--accent-warning); margin-bottom: 1rem;">Props Object</h4>
+                        <div class="code-block" style="font-size: 0.8rem;">
+                            <span class="function">Card</span>({
+                            <span class="attr">children</span>: <span class="tag">&lt;</span><span
+                                class="component">Content</span> <span class="tag">/&gt;</span>
+                            })
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: Named Slots -->
+        <section id="slots" class="section">
+            <div class="card">
+                <div class="card-header">
+                    <span class="emoji">🎰</span>
+                    <h2>Named Slots - Multiple Content Regions</h2>
+                </div>
+
+                <div class="highlight-box">
+                    <h4>💡 Key Insight</h4>
+                    <p>Use named props for different content areas. Think of it like a slot machine with designated
+                        spots!</p>
+                </div>
+
+                <div class="viz-container">
+                    <div class="viz-panel">
+                        <h3>📝 JSX Code</h3>
+                        <div class="code-block">
+                            <span class="tag">&lt;</span><span class="component">Modal</span>
+                            <span class="attr">header</span>={<span class="tag">&lt;</span><span
+                                class="component">h2</span><span class="tag">&gt;</span>Title<span
+                                class="tag">&lt;/</span><span class="component">h2</span><span class="tag">&gt;</span>}
+                            <span class="attr">footer</span>={<span class="tag">&lt;</span><span
+                                class="component">Button</span><span class="tag">&gt;</span>Save<span
+                                class="tag">&lt;/</span><span class="component">Button</span><span
+                                class="tag">&gt;</span>}
+                            <span class="tag">&gt;</span>
+                            <span class="tag">&lt;</span><span class="component">p</span><span
+                                class="tag">&gt;</span>Body content here<span class="tag">&lt;/</span><span
+                                class="component">p</span><span class="tag">&gt;</span>
+                            <span class="tag">&lt;/</span><span class="component">Modal</span><span
+                                class="tag">&gt;</span>
+                        </div>
+
+                        <div class="btn-group">
+                            <button class="btn btn-primary" onclick="animateSlotsDemo()">
+                                ▶️ Fill All Slots
+                            </button>
+                            <button class="btn btn-secondary" onclick="resetSlotsDemo()">
+                                🔄 Reset
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="viz-panel">
+                        <h3>🎨 Visual Representation</h3>
+                        <div id="slots-demo">
+                            <div class="component-visual">
+                                <span class="component-label">Modal Component</span>
+
+                                <div class="slot-area" id="header-slot" style="min-height: 50px;">
+                                    <span class="slot-label">📌 {header} slot</span>
+                                </div>
+
+                                <div class="slot-area" id="body-slot" style="min-height: 80px;">
+                                    <span class="slot-label">📦 {children} slot</span>
+                                </div>
+
+                                <div class="slot-area" id="footer-slot" style="min-height: 50px;">
+                                    <span class="slot-label">🔚 {footer} slot</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: var(--accent-primary);"></div>
+                        <span>Component Container</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: var(--accent-secondary);"></div>
+                        <span>Slot Areas (Content Projection)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: var(--accent-warning);"></div>
+                        <span>Injected Content</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Compound Components -->
+        <section id="compound" class="section">
+            <div class="card">
+                <div class="card-header">
+                    <span class="emoji">🔗</span>
+                    <h2>Compound Components - Shared State Magic</h2>
+                </div>
+
+                <div class="highlight-box">
+                    <h4>💡 Key Insight</h4>
+                    <p>Compound components share implicit state via Context, giving consumers a clean declarative API
+                        like <code>&lt;Tabs.Tab&gt;</code> while keeping state management internal!</p>
+                </div>
+
+                <div class="viz-container">
+                    <div class="viz-panel">
+                        <h3>📝 Usage Example</h3>
+                        <div class="code-block">
+                            <span class="tag">&lt;</span><span class="component">Tabs</span> <span
+                                class="attr">defaultIndex</span>={<span class="string">0</span>}<span
+                                class="tag">&gt;</span>
+                            <span class="tag">&lt;</span><span class="component">Tabs.List</span><span
+                                class="tag">&gt;</span>
+                            <span class="tag">&lt;</span><span class="component">Tabs.Tab</span><span
+                                class="tag">&gt;</span>🏠 Home<span class="tag">&lt;/</span><span
+                                class="component">Tabs.Tab</span><span class="tag">&gt;</span>
+                            <span class="tag">&lt;</span><span class="component">Tabs.Tab</span><span
+                                class="tag">&gt;</span>⚙️ Settings<span class="tag">&lt;/</span><span
+                                class="component">Tabs.Tab</span><span class="tag">&gt;</span>
+                            <span class="tag">&lt;</span><span class="component">Tabs.Tab</span><span
+                                class="tag">&gt;</span>👤 Profile<span class="tag">&lt;/</span><span
+                                class="component">Tabs.Tab</span><span class="tag">&gt;</span>
+                            <span class="tag">&lt;/</span><span class="component">Tabs.List</span><span
+                                class="tag">&gt;</span>
+                            <span class="tag">&lt;</span><span class="component">Tabs.Panels</span><span
+                                class="tag">&gt;</span>
+                            <span class="tag">&lt;</span><span class="component">Tabs.Panel</span><span
+                                class="tag">&gt;</span>Home Content<span class="tag">&lt;/</span><span
+                                class="component">Tabs.Panel</span><span class="tag">&gt;</span>
+                            <span class="tag">&lt;</span><span class="component">Tabs.Panel</span><span
+                                class="tag">&gt;</span>Settings Content<span class="tag">&lt;/</span><span
+                                class="component">Tabs.Panel</span><span class="tag">&gt;</span>
+                            <span class="tag">&lt;</span><span class="component">Tabs.Panel</span><span
+                                class="tag">&gt;</span>Profile Content<span class="tag">&lt;/</span><span
+                                class="component">Tabs.Panel</span><span class="tag">&gt;</span>
+                            <span class="tag">&lt;/</span><span class="component">Tabs.Panels</span><span
+                                class="tag">&gt;</span>
+                            <span class="tag">&lt;/</span><span class="component">Tabs</span><span
+                                class="tag">&gt;</span>
+                        </div>
+                    </div>
+
+                    <div class="viz-panel">
+                        <h3>🎨 Live Demo</h3>
+                        <div class="tabs-demo">
+                            <div class="tabs-list">
+                                <button class="tab-button active" onclick="switchTab(0)">🏠 Home</button>
+                                <button class="tab-button" onclick="switchTab(1)">⚙️ Settings</button>
+                                <button class="tab-button" onclick="switchTab(2)">👤 Profile</button>
+                            </div>
+                            <div class="tab-panel active" id="panel-0">
+                                <h4>🏠 Welcome Home!</h4>
+                                <p>This is the home panel content. Click other tabs to see the magic!</p>
+                            </div>
+                            <div class="tab-panel" id="panel-1">
+                                <h4>⚙️ Settings Panel</h4>
+                                <p>Configure your preferences here. All tabs share state via Context!</p>
+                            </div>
+                            <div class="tab-panel" id="panel-2">
+                                <h4>👤 Profile Panel</h4>
+                                <p>View your profile information. Notice how state flows seamlessly!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Context Flow Visualization -->
+                <h3 style="margin: 2rem 0 1rem;">🔮 How Context Enables State Sharing</h3>
+                <div class="context-flow">
+                    <div class="context-provider">
+                        <div style="text-align: center; padding-top: 1rem;">
+                            <strong style="color: var(--accent-primary);">TabsContext.Provider</strong>
+                            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.5rem;">
+                                value={{ activeIndex: <span id="ctx-active"
+                                    style="color: var(--accent-secondary);">0</span>, setActiveIndex: fn }}
+                            </p>
+                        </div>
+                        <div class="data-flow-line" style="margin: 1rem auto;"></div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="context-consumer">
+                                <strong>Tabs.Tab</strong><br>
+                                <small style="color: var(--text-secondary);">Consumes: setActiveIndex</small>
+                            </div>
+                            <div class="context-consumer">
+                                <strong>Tabs.Panel</strong><br>
+                                <small style="color: var(--text-secondary);">Consumes: activeIndex</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4: Tricky Example -->
+        <section id="tricky" class="section">
+            <div class="card">
+                <div class="card-header">
+                    <span class="emoji">🎯</span>
+                    <h2>Tricky Example: Wizard with Flexible Steps</h2>
+                </div>
+
+                <div class="highlight-box">
+                    <h4>🧠 Interview Challenge</h4>
+                    <p>Build a Wizard that supports dynamic steps, validation, and flexible content.
+                        This combines ALL composition patterns!</p>
+                </div>
+
+                <!-- Step-by-Step Breakdown -->
+                <h3 style="margin: 1.5rem 0 1rem;">📊 Step-by-Step Animation</h3>
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="runWizardAnimation()">
+                        ▶️ Run Full Animation
+                    </button>
+                    <button class="btn btn-secondary" onclick="resetWizardAnimation()">
+                        🔄 Reset
+                    </button>
+                </div>
+
+                <div class="viz-container" style="margin-top: 1rem;">
+                    <div class="viz-panel">
+                        <h3>🔧 Implementation Steps</h3>
+                        <div class="steps" id="wizard-steps">
+                            <div class="step" id="step-1">
+                                <div class="step-number">1</div>
+                                <div class="step-content">
+                                    <h4>Create WizardContext</h4>
+                                    <p>Store: currentStep, totalSteps, goNext, goPrev, formData</p>
+                                </div>
+                            </div>
+                            <div class="step" id="step-2">
+                                <div class="step-number">2</div>
+                                <div class="step-content">
+                                    <h4>Wizard Provider Component</h4>
+                                    <p>Wraps children with Context.Provider, manages state</p>
+                                </div>
+                            </div>
+                            <div class="step" id="step-3">
+                                <div class="step-number">3</div>
+                                <div class="step-content">
+                                    <h4>Wizard.Steps Container</h4>
+                                    <p>Counts children, renders only active step</p>
+                                </div>
+                            </div>
+                            <div class="step" id="step-4">
+                                <div class="step-number">4</div>
+                                <div class="step-content">
+                                    <h4>Wizard.Step Component</h4>
+                                    <p>Renders content, can validate before proceeding</p>
+                                </div>
+                            </div>
+                            <div class="step" id="step-5">
+                                <div class="step-number">5</div>
+                                <div class="step-content">
+                                    <h4>Navigation Components</h4>
+                                    <p>Wizard.Prev, Wizard.Next, Wizard.Submit consume context</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="viz-panel">
+                        <h3>🎨 Live Wizard Demo</h3>
+                        <div id="wizard-demo">
+                            <div class="component-visual" style="border-color: var(--accent-warning);">
+                                <span class="component-label" style="background: var(--accent-warning); color: #000;">
+                                    Wizard (Compound)
+                                </span>
+
+                                <!-- Progress Bar -->
+                                <div style="display: flex; gap: 0.5rem; margin: 1rem 0;">
+                                    <div id="prog-1" class="step-indicator"
+                                        style="flex: 1; height: 8px; background: var(--accent-primary); border-radius: 4px;">
+                                    </div>
+                                    <div id="prog-2" class="step-indicator"
+                                        style="flex: 1; height: 8px; background: var(--border-color); border-radius: 4px;">
+                                    </div>
+                                    <div id="prog-3" class="step-indicator"
+                                        style="flex: 1; height: 8px; background: var(--border-color); border-radius: 4px;">
+                                    </div>
+                                </div>
+
+                                <!-- Step Content -->
+                                <div class="slot-area" id="wizard-content" style="min-height: 120px;">
+                                    <div class="content-injected">
+                                        <strong>📋 Step 1: Personal Info</strong>
+                                        <p
+                                            style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.5rem;">
+                                            Enter your name and email
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <!-- Navigation -->
+                                <div style="display: flex; justify-content: space-between; margin-top: 1rem;">
+                                    <button class="btn btn-secondary" id="wizard-prev" disabled style="opacity: 0.5;">
+                                        ← Previous
+                                    </button>
+                                    <span style="color: var(--text-secondary);" id="wizard-indicator">
+                                        Step <span id="current-step">1</span> of 3
+                                    </span>
+                                    <button class="btn btn-primary" id="wizard-next" onclick="wizardNext()">
+                                        Next →
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Code Implementation -->
+                <h3 style="margin: 2rem 0 1rem;">💻 Key Implementation Code</h3>
+                <div class="code-block">
+                    <span class="comment">// 🔮 Context for state sharing</span>
+                    <span class="keyword">const</span> WizardContext = <span class="function">createContext</span>(<span
+                        class="keyword">null</span>);
+
+                    <span class="comment">// 📦 Main Wizard component</span>
+                    <span class="keyword">function</span> <span class="function">Wizard</span>({ children, onComplete })
+                    {
+                    <span class="keyword">const</span> [step, setStep] = <span class="function">useState</span>(<span
+                        class="string">0</span>);
+                    <span class="keyword">const</span> [data, setData] = <span class="function">useState</span>({});
+
+                    <span class="keyword">const</span> value = <span class="function">useMemo</span>(() => ({
+                    step, setStep, data, setData,
+                    <span class="function">next</span>: () => setStep(s => s + 1),
+                    <span class="function">prev</span>: () => setStep(s => s - 1),
+                    <span class="function">complete</span>: () => onComplete(data)
+                    }), [step, data]);
+
+                    <span class="keyword">return</span> (
+                    <span class="tag">&lt;</span><span class="component">WizardContext.Provider</span> <span
+                        class="attr">value</span>={value}<span class="tag">&gt;</span>
+                    {children}
+                    <span class="tag">&lt;/</span><span class="component">WizardContext.Provider</span><span
+                        class="tag">&gt;</span>
+                    );
+                    }
+
+                    <span class="comment">// 🎯 Only renders active step</span>
+                    Wizard.Steps = <span class="keyword">function</span>({ children }) {
+                    <span class="keyword">const</span> { step } = <span
+                        class="function">useContext</span>(WizardContext);
+                    <span class="keyword">const</span> steps = React.Children.<span
+                        class="function">toArray</span>(children);
+                    <span class="keyword">return</span> steps[step] || <span class="keyword">null</span>;
+                    };
+
+                    <span class="comment">// ⏩ Context-aware navigation</span>
+                    Wizard.Next = <span class="keyword">function</span>({ children }) {
+                    <span class="keyword">const</span> { next } = <span
+                        class="function">useContext</span>(WizardContext);
+                    <span class="keyword">return</span> <span class="tag">&lt;</span><span
+                        class="component">button</span> <span class="attr">onClick</span>={next}<span
+                        class="tag">&gt;</span>{children}<span class="tag">&lt;/</span><span
+                        class="component">button</span><span class="tag">&gt;</span>;
+                    };
+                </div>
+
+                <div class="highlight-box"
+                    style="border-color: var(--accent-danger); background: rgba(248, 113, 113, 0.1);">
+                    <h4 style="color: var(--accent-danger);">⚠️ Common Trap!</h4>
+                    <p>Don't use <code>React.cloneElement</code> to pass step index - it breaks if steps are wrapped.
+                        Use <code>React.Children.toArray</code> with array indexing or Context instead!</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <footer class="footer">
+        <p>🧩 Component Composition Patterns Visualizer | React Interview Prep</p>
+        <p style="font-size: 0.85rem; margin-top: 0.5rem;">Built for FAANG interview mastery</p>
+    </footer>
+
+    <script>
+        // Navigation
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(sectionId).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Children Demo
+        function animateChildrenDemo() {
+            const slot = document.getElementById('children-slot');
+            slot.classList.add('animate-slot');
+            setTimeout(() => {
+                slot.innerHTML = `
+          <div class="content-injected">
+            <p style="margin-bottom: 0.5rem;">👋 Hello World!</p>
+            <button class="btn btn-primary" style="padding: 0.5rem 1rem;">🖱️ Click Me</button>
+          </div>
+        `;
+            }, 300);
+        }
+
+        function resetChildrenDemo() {
+            const slot = document.getElementById('children-slot');
+            slot.classList.remove('animate-slot');
+            slot.innerHTML = '<span class="slot-label">{children} slot - waiting for content...</span>';
+        }
+
+        // Slots Demo
+        function animateSlotsDemo() {
+            const slots = [
+                { id: 'header-slot', content: '<div class="content-injected"><h2 style="margin:0;">📌 Modal Title</h2></div>', delay: 0 },
+                { id: 'body-slot', content: '<div class="content-injected"><p>📝 Body content goes here...</p></div>', delay: 400 },
+                { id: 'footer-slot', content: '<div class="content-injected"><button class="btn btn-primary">💾 Save</button></div>', delay: 800 }
+            ];
+
+            slots.forEach(({ id, content, delay }) => {
+                setTimeout(() => {
+                    const slot = document.getElementById(id);
+                    slot.classList.add('animate-slot');
+                    setTimeout(() => slot.innerHTML = content, 200);
+                }, delay);
+            });
+        }
+
+        function resetSlotsDemo() {
+            ['header-slot', 'body-slot', 'footer-slot'].forEach((id, i) => {
+                const slot = document.getElementById(id);
+                slot.classList.remove('animate-slot');
+                const labels = ['📌 {header} slot', '📦 {children} slot', '🔚 {footer} slot'];
+                slot.innerHTML = `<span class="slot-label">${labels[i]}</span>`;
+            });
+        }
+
+        // Compound Component Tabs
+        let activeTab = 0;
+        function switchTab(index) {
+            activeTab = index;
+            document.querySelectorAll('.tab-button').forEach((btn, i) => {
+                btn.classList.toggle('active', i === index);
+            });
+            document.querySelectorAll('.tab-panel').forEach((panel, i) => {
+                panel.classList.toggle('active', i === index);
+            });
+            document.getElementById('ctx-active').textContent = index;
+        }
+
+        // Wizard Demo
+        let wizardStep = 0;
+        const wizardSteps = [
+            { title: '📋 Step 1: Personal Info', desc: 'Enter your name and email' },
+            { title: '📍 Step 2: Address', desc: 'Enter your shipping address' },
+            { title: '✅ Step 3: Review', desc: 'Review and submit your form' }
+        ];
+
+        function wizardNext() {
+            if (wizardStep < 2) {
+                wizardStep++;
+                updateWizard();
+            } else {
+                const content = document.getElementById('wizard-content');
+                content.innerHTML = `
+          <div class="content-injected" style="text-align: center;">
+            <span style="font-size: 3rem;">🎉</span>
+            <h3 style="color: var(--accent-secondary);">Form Submitted!</h3>
+            <p style="color: var(--text-secondary);">onComplete callback triggered</p>
+          </div>
+        `;
+                document.getElementById('wizard-next').disabled = true;
+                document.getElementById('wizard-next').style.opacity = '0.5';
+            }
+        }
+
+        function wizardPrev() {
+            if (wizardStep > 0) {
+                wizardStep--;
+                updateWizard();
+            }
+        }
+
+        function updateWizard() {
+            document.getElementById('current-step').textContent = wizardStep + 1;
+
+            // Update progress
+            [1, 2, 3].forEach(i => {
+                const prog = document.getElementById(`prog-${i}`);
+                prog.style.background = i <= wizardStep + 1 ? 'var(--accent-primary)' : 'var(--border-color)';
+            });
+
+            // Update content
+            const content = document.getElementById('wizard-content');
+            content.innerHTML = `
+        <div class="content-injected">
+          <strong>${wizardSteps[wizardStep].title}</strong>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.5rem;">
+            ${wizardSteps[wizardStep].desc}
+          </p>
+        </div>
+      `;
+
+            // Update buttons
+            document.getElementById('wizard-prev').disabled = wizardStep === 0;
+            document.getElementById('wizard-prev').style.opacity = wizardStep === 0 ? '0.5' : '1';
+            document.getElementById('wizard-next').textContent = wizardStep === 2 ? 'Submit ✓' : 'Next →';
+            document.getElementById('wizard-next').disabled = false;
+            document.getElementById('wizard-next').style.opacity = '1';
+        }
+
+        // Wizard Animation
+        function runWizardAnimation() {
+            const steps = document.querySelectorAll('.step');
+            steps.forEach(s => s.classList.remove('active'));
+
+            let i = 0;
+            const interval = setInterval(() => {
+                if (i > 0) steps[i - 1].classList.remove('active');
+                if (i < 5) {
+                    steps[i].classList.add('active');
+                    i++;
+                } else {
+                    clearInterval(interval);
+                }
+            }, 800);
+        }
+
+        function resetWizardAnimation() {
+            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+            wizardStep = 0;
+            updateWizard();
+        }
+
+        // Set up prev button
+        document.getElementById('wizard-prev').onclick = wizardPrev;
+    </script>
+</body>
+
+</html>

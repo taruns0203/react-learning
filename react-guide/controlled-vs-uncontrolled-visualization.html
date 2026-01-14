@@ -1,0 +1,1515 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎮 Controlled vs Uncontrolled Components - Interactive Visualizer</title>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --bg-code: #0d1117;
+            --accent-primary: #818cf8;
+            --accent-secondary: #34d399;
+            --accent-warning: #fbbf24;
+            --accent-danger: #f87171;
+            --accent-info: #38bdf8;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border-color: #334155;
+            --gradient-controlled: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-uncontrolled: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-success: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 3rem 0;
+            background: linear-gradient(180deg, rgba(129, 140, 248, 0.1) 0%, transparent 100%);
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 3rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            background: var(--gradient-controlled);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        /* Navigation Tabs */
+        .nav-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 3rem;
+            flex-wrap: wrap;
+        }
+
+        .nav-tab {
+            padding: 1rem 2rem;
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .nav-tab:hover {
+            border-color: var(--accent-primary);
+            transform: translateY(-2px);
+        }
+
+        .nav-tab.active {
+            background: var(--gradient-controlled);
+            border-color: transparent;
+            color: white;
+            box-shadow: 0 10px 40px rgba(129, 140, 248, 0.3);
+        }
+
+        /* Section Container */
+        .section {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .card-header h2 {
+            font-size: 1.5rem;
+        }
+
+        .card-header .emoji {
+            font-size: 2rem;
+        }
+
+        /* Side by Side Comparison */
+        .comparison-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        @media (max-width: 900px) {
+            .comparison-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .comparison-panel {
+            background: var(--bg-code);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 2px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .comparison-panel.controlled {
+            border-color: var(--accent-primary);
+        }
+
+        .comparison-panel.uncontrolled {
+            border-color: var(--accent-danger);
+        }
+
+        .panel-badge {
+            position: absolute;
+            top: 0;
+            right: 0;
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+            font-weight: 700;
+            border-radius: 0 14px 0 12px;
+        }
+
+        .panel-badge.controlled {
+            background: var(--gradient-controlled);
+            color: white;
+        }
+
+        .panel-badge.uncontrolled {
+            background: var(--gradient-uncontrolled);
+            color: white;
+        }
+
+        .panel-title {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Data Flow Visualization */
+        .flow-diagram {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            min-height: 200px;
+        }
+
+        .flow-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin: 0.5rem 0;
+        }
+
+        .flow-box {
+            background: var(--bg-card);
+            border: 2px solid var(--accent-primary);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            text-align: center;
+            min-width: 100px;
+            transition: all 0.3s ease;
+        }
+
+        .flow-box.state {
+            border-color: var(--accent-secondary);
+            background: rgba(52, 211, 153, 0.1);
+        }
+
+        .flow-box.dom {
+            border-color: var(--accent-warning);
+            background: rgba(251, 191, 36, 0.1);
+        }
+
+        .flow-box.input {
+            border-color: var(--accent-info);
+            background: rgba(56, 189, 248, 0.1);
+        }
+
+        .flow-box.highlight {
+            animation: pulseGlow 1s ease-in-out;
+            box-shadow: 0 0 20px currentColor;
+        }
+
+        @keyframes pulseGlow {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            50% {
+                transform: scale(1.05);
+                opacity: 0.8;
+            }
+        }
+
+        .flow-arrow {
+            font-size: 1.5rem;
+            color: var(--accent-primary);
+            animation: arrowPulse 1.5s ease infinite;
+        }
+
+        .flow-arrow.down {
+            transform: rotate(90deg);
+        }
+
+        @keyframes arrowPulse {
+
+            0%,
+            100% {
+                opacity: 0.5;
+            }
+
+            50% {
+                opacity: 1;
+            }
+        }
+
+        /* Interactive Demo */
+        .demo-area {
+            background: var(--bg-code);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .demo-input {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1.1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        .demo-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 20px rgba(129, 140, 248, 0.3);
+        }
+
+        /* State Display */
+        .state-display {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: rgba(52, 211, 153, 0.1);
+            border: 2px solid var(--accent-secondary);
+            border-radius: 8px;
+        }
+
+        .state-label {
+            font-weight: 600;
+            color: var(--accent-secondary);
+        }
+
+        .state-value {
+            font-family: 'Fira Code', monospace;
+            background: var(--bg-dark);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            flex: 1;
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+        }
+
+        /* Log Panel */
+        .log-panel {
+            background: var(--bg-dark);
+            border-radius: 8px;
+            padding: 1rem;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
+        }
+
+        .log-entry {
+            padding: 0.25rem 0;
+            border-bottom: 1px solid var(--border-color);
+            animation: logSlide 0.3s ease;
+        }
+
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+
+        @keyframes logSlide {
+            from {
+                transform: translateX(-20px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .log-time {
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+        }
+
+        .log-event {
+            color: var(--accent-info);
+        }
+
+        .log-value {
+            color: var(--accent-secondary);
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+
+        .btn-primary {
+            background: var(--gradient-controlled);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(129, 140, 248, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 2px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent-primary);
+        }
+
+        .btn-danger {
+            background: var(--gradient-uncontrolled);
+            color: white;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            margin: 1.5rem 0;
+            flex-wrap: wrap;
+        }
+
+        /* Highlight Box */
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(251, 191, 36, 0.05) 100%);
+            border-left: 4px solid var(--accent-warning);
+            padding: 1rem 1.5rem;
+            border-radius: 0 12px 12px 0;
+            margin: 1rem 0;
+        }
+
+        .highlight-box h4 {
+            color: var(--accent-warning);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .highlight-box.success {
+            background: linear-gradient(135deg, rgba(52, 211, 153, 0.1) 0%, rgba(52, 211, 153, 0.05) 100%);
+            border-left-color: var(--accent-secondary);
+        }
+
+        .highlight-box.success h4 {
+            color: var(--accent-secondary);
+        }
+
+        .highlight-box.danger {
+            background: linear-gradient(135deg, rgba(248, 113, 113, 0.1) 0%, rgba(248, 113, 113, 0.05) 100%);
+            border-left-color: var(--accent-danger);
+        }
+
+        .highlight-box.danger h4 {
+            color: var(--accent-danger);
+        }
+
+        /* Code Block */
+        .code-block {
+            background: var(--bg-code);
+            border-radius: 12px;
+            padding: 1.5rem;
+            overflow-x: auto;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 0.9rem;
+            line-height: 1.8;
+            border: 1px solid var(--border-color);
+        }
+
+        .keyword {
+            color: #ff79c6;
+        }
+
+        .function {
+            color: #50fa7b;
+        }
+
+        .string {
+            color: #f1fa8c;
+        }
+
+        .comment {
+            color: #6272a4;
+        }
+
+        .tag {
+            color: #ff79c6;
+        }
+
+        .attr {
+            color: #50fa7b;
+        }
+
+        .value {
+            color: #f1fa8c;
+        }
+
+        .component {
+            color: #8be9fd;
+        }
+
+        /* Render Counter */
+        .render-counter {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--bg-dark);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .render-count {
+            font-size: 1.5rem;
+            color: var(--accent-warning);
+            font-family: 'Fira Code', monospace;
+        }
+
+        .render-flash {
+            animation: renderFlash 0.3s ease;
+        }
+
+        @keyframes renderFlash {
+
+            0%,
+            100% {
+                background: var(--bg-dark);
+            }
+
+            50% {
+                background: rgba(251, 191, 36, 0.3);
+            }
+        }
+
+        /* Credit Card Demo */
+        .credit-card-demo {
+            perspective: 1000px;
+            margin: 2rem 0;
+        }
+
+        .credit-card {
+            width: 340px;
+            height: 200px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            border-radius: 16px;
+            padding: 1.5rem;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            transform-style: preserve-3d;
+            transition: transform 0.5s ease;
+            margin: 0 auto;
+        }
+
+        .credit-card:hover {
+            transform: rotateY(5deg) rotateX(5deg);
+        }
+
+        .card-chip {
+            width: 50px;
+            height: 40px;
+            background: linear-gradient(135deg, #ffd700, #ffaa00);
+            border-radius: 6px;
+            position: absolute;
+            top: 50px;
+            left: 25px;
+        }
+
+        .card-number {
+            position: absolute;
+            bottom: 60px;
+            left: 25px;
+            font-size: 1.4rem;
+            font-family: 'Fira Code', monospace;
+            letter-spacing: 3px;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-name {
+            position: absolute;
+            bottom: 25px;
+            left: 25px;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .card-expiry {
+            position: absolute;
+            bottom: 25px;
+            right: 70px;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .card-type {
+            position: absolute;
+            top: 20px;
+            right: 25px;
+            font-size: 2rem;
+        }
+
+        /* Form Fields */
+        .form-row {
+            display: flex;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .form-group {
+            flex: 1;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            font-family: 'Fira Code', monospace;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        .form-input.valid {
+            border-color: var(--accent-secondary);
+        }
+
+        .form-input.invalid {
+            border-color: var(--accent-danger);
+        }
+
+        /* Validation Message */
+        .validation-msg {
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .validation-msg.success {
+            color: var(--accent-secondary);
+        }
+
+        .validation-msg.error {
+            color: var(--accent-danger);
+        }
+
+        /* Timeline */
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--border-color);
+        }
+
+        .timeline-item {
+            position: relative;
+            padding: 1rem 0;
+            opacity: 0.5;
+            transition: all 0.3s ease;
+        }
+
+        .timeline-item.active {
+            opacity: 1;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -24px;
+            top: 1.5rem;
+            width: 10px;
+            height: 10px;
+            background: var(--border-color);
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .timeline-item.active::before {
+            background: var(--accent-primary);
+            box-shadow: 0 0 10px var(--accent-primary);
+        }
+
+        /* Pitfall Demo */
+        .pitfall-container {
+            border: 2px dashed var(--accent-danger);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            position: relative;
+        }
+
+        .pitfall-label {
+            position: absolute;
+            top: -12px;
+            left: 20px;
+            background: var(--accent-danger);
+            color: white;
+            padding: 0.25rem 1rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border-color);
+            margin-top: 3rem;
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: relative;
+            cursor: help;
+        }
+
+        .tooltip::after {
+            content: attr(data-tip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+
+        .tooltip:hover::after {
+            opacity: 1;
+            bottom: calc(100% + 10px);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>🎮 Controlled vs Uncontrolled Components</h1>
+        <p>Interactive visualization of React form handling patterns</p>
+    </div>
+
+    <div class="container">
+        <!-- Navigation -->
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showSection('basics')">
+                📚 Basic Concept
+            </button>
+            <button class="nav-tab" onclick="showSection('dataflow')">
+                🔄 Data Flow
+            </button>
+            <button class="nav-tab" onclick="showSection('creditcard')">
+                💳 Tricky Example
+            </button>
+            <button class="nav-tab" onclick="showSection('pitfalls')">
+                ⚠️ Common Pitfalls
+            </button>
+        </div>
+
+        <!-- Section 1: Basics -->
+        <section id="basics" class="section active">
+            <div class="card">
+                <div class="card-header">
+                    <span class="emoji">📚</span>
+                    <h2>Understanding the Core Difference</h2>
+                </div>
+
+                <div class="highlight-box">
+                    <h4>💡 The Key Question</h4>
+                    <p><strong>Who owns the form state?</strong> React (controlled) or the DOM (uncontrolled)?</p>
+                </div>
+
+                <div class="comparison-container">
+                    <!-- Controlled Panel -->
+                    <div class="comparison-panel controlled">
+                        <span class="panel-badge controlled">CONTROLLED</span>
+                        <h3 class="panel-title">🎮 React Owns State</h3>
+
+                        <div class="demo-area">
+                            <label class="form-label">Type something:</label>
+                            <input type="text" class="demo-input" id="controlled-input" placeholder="Start typing...">
+
+                            <div class="state-display">
+                                <span class="state-label">📦 React State:</span>
+                                <span class="state-value" id="controlled-state">""</span>
+                            </div>
+
+                            <div class="render-counter" id="controlled-renders">
+                                🔄 Renders: <span class="render-count">0</span>
+                            </div>
+                        </div>
+
+                        <div class="log-panel" id="controlled-log">
+                            <div class="log-entry">
+                                <span class="log-time">Ready</span>
+                                <span class="log-event">Waiting for input...</span>
+                            </div>
+                        </div>
+
+                        <div class="highlight-box success">
+                            <h4>✅ Benefits</h4>
+                            <ul>
+                                <li>Real-time validation</li>
+                                <li>Input transformation</li>
+                                <li>Predictable state</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Uncontrolled Panel -->
+                    <div class="comparison-panel uncontrolled">
+                        <span class="panel-badge uncontrolled">UNCONTROLLED</span>
+                        <h3 class="panel-title">🌐 DOM Owns State</h3>
+
+                        <div class="demo-area">
+                            <label class="form-label">Type something:</label>
+                            <input type="text" class="demo-input" id="uncontrolled-input" placeholder="Start typing...">
+
+                            <div class="state-display">
+                                <span class="state-label">🌐 DOM Value:</span>
+                                <span class="state-value" id="uncontrolled-state">""</span>
+                            </div>
+
+                            <div class="btn-group">
+                                <button class="btn btn-danger" onclick="readUncontrolledValue()">
+                                    📖 Read via Ref
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="log-panel" id="uncontrolled-log">
+                            <div class="log-entry">
+                                <span class="log-time">Ready</span>
+                                <span class="log-event">Click "Read via Ref" to get value</span>
+                            </div>
+                        </div>
+
+                        <div class="highlight-box danger">
+                            <h4>⚠️ Trade-offs</h4>
+                            <ul>
+                                <li>No real-time access</li>
+                                <li>Imperative reads only</li>
+                                <li>Less React integration</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: Data Flow -->
+        <section id="dataflow" class="section">
+            <div class="card">
+                <div class="card-header">
+                    <span class="emoji">🔄</span>
+                    <h2>Data Flow Visualization</h2>
+                </div>
+
+                <div class="comparison-container">
+                    <!-- Controlled Flow -->
+                    <div class="comparison-panel controlled">
+                        <span class="panel-badge controlled">CONTROLLED</span>
+                        <h3 class="panel-title">🎮 Circular Data Flow</h3>
+
+                        <div class="flow-diagram">
+                            <div class="flow-row">
+                                <div class="flow-box state" id="flow-state">
+                                    📦 useState<br><span id="flow-state-val">"Hello"</span>
+                                </div>
+                            </div>
+                            <div class="flow-row">
+                                <span class="flow-arrow down">→</span>
+                            </div>
+                            <div class="flow-row">
+                                <div class="flow-box input" id="flow-input">
+                                    🖥️ value={state}<br>
+                                    <input type="text" id="flow-demo-input"
+                                        style="width:120px;margin-top:5px;padding:5px;border-radius:4px;border:1px solid #555;background:#1a1a2e;color:#fff;">
+                                </div>
+                            </div>
+                            <div class="flow-row">
+                                <span class="flow-arrow down">→</span>
+                            </div>
+                            <div class="flow-row">
+                                <div class="flow-box" id="flow-onchange">
+                                    📡 onChange<br>"User typed K"
+                                </div>
+                            </div>
+                            <div class="flow-row">
+                                <span class="flow-arrow down">→</span>
+                            </div>
+                            <div class="flow-row">
+                                <div class="flow-box state" id="flow-setstate">
+                                    ⚡ setState<br>"HelloK"
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="btn-group">
+                            <button class="btn btn-primary" onclick="animateControlledFlow()">
+                                ▶️ Animate Flow
+                            </button>
+                            <button class="btn btn-secondary" onclick="resetControlledFlow()">
+                                🔄 Reset
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Uncontrolled Flow -->
+                    <div class="comparison-panel uncontrolled">
+                        <span class="panel-badge uncontrolled">UNCONTROLLED</span>
+                        <h3 class="panel-title">🌐 Direct DOM Mutation</h3>
+
+                        <div class="flow-diagram">
+                            <div class="flow-row">
+                                <div class="flow-box dom" id="uflow-dom">
+                                    🌐 DOM State<br>Owns the value
+                                </div>
+                            </div>
+                            <div class="flow-row">
+                                <span class="flow-arrow down">→</span>
+                            </div>
+                            <div class="flow-row">
+                                <div class="flow-box input" id="uflow-input">
+                                    🖥️ defaultValue<br>
+                                    <input type="text" id="uflow-demo-input" value="Hello"
+                                        style="width:120px;margin-top:5px;padding:5px;border-radius:4px;border:1px solid #555;background:#1a1a2e;color:#fff;">
+                                </div>
+                            </div>
+                            <div class="flow-row" style="margin-top:2rem;">
+                                <div class="flow-box" id="uflow-ref" style="border-style:dashed;">
+                                    🔍 ref.current.value<br>
+                                    <span id="uflow-ref-val">(read on demand)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="btn-group">
+                            <button class="btn btn-danger" onclick="readUncontrolledFlow()">
+                                📖 Read with Ref
+                            </button>
+                        </div>
+
+                        <p style="color: var(--text-secondary); margin-top: 1rem;">
+                            👆 Notice: No re-renders when typing. React doesn't know about changes until you read!
+                        </p>
+                    </div>
+                </div>
+
+                <div class="highlight-box">
+                    <h4>🎯 Key Insight</h4>
+                    <p>In controlled components, <strong>every keystroke triggers: onChange → setState → re-render → DOM
+                            update</strong>.
+                        In uncontrolled, the DOM updates itself and React only reads when asked.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Credit Card Demo -->
+        <section id="creditcard" class="section">
+            <div class="card">
+                <div class="card-header">
+                    <span class="emoji">💳</span>
+                    <h2>Tricky Example: Credit Card Input</h2>
+                </div>
+
+                <div class="highlight-box">
+                    <h4>🎯 Why This is Tricky</h4>
+                    <p>This example combines: <strong>input formatting</strong>, <strong>real-time validation</strong>,
+                        <strong>auto-advance</strong>, and <strong>derived state</strong> — all only possible with
+                        controlled components!
+                    </p>
+                </div>
+
+                <div class="credit-card-demo">
+                    <div class="credit-card">
+                        <div class="card-chip"></div>
+                        <div class="card-type" id="cc-type">💳</div>
+                        <div class="card-number" id="cc-number">•••• •••• •••• ••••</div>
+                        <div class="card-name" id="cc-name">YOUR NAME</div>
+                        <div class="card-expiry" id="cc-expiry">MM/YY</div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Card Number</label>
+                        <input type="text" class="form-input" id="cc-input-number" placeholder="1234 5678 9012 3456"
+                            maxlength="19">
+                        <div class="validation-msg" id="cc-number-validation"></div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Cardholder Name</label>
+                        <input type="text" class="form-input" id="cc-input-name" placeholder="JOHN DOE" maxlength="20">
+                    </div>
+                    <div class="form-group" style="max-width: 120px;">
+                        <label class="form-label">Expiry</label>
+                        <input type="text" class="form-input" id="cc-input-expiry" placeholder="MM/YY" maxlength="5">
+                    </div>
+                    <div class="form-group" style="max-width: 100px;">
+                        <label class="form-label">CVV</label>
+                        <input type="text" class="form-input" id="cc-input-cvv" placeholder="123" maxlength="4">
+                    </div>
+                </div>
+
+                <div class="comparison-container">
+                    <div class="card" style="margin:0;">
+                        <h3>🔧 Controlled Magic Happening</h3>
+                        <div class="timeline" id="cc-timeline">
+                            <div class="timeline-item" id="tl-format">
+                                <strong>📐 Auto-formatting</strong>
+                                <p>Adding spaces every 4 digits</p>
+                            </div>
+                            <div class="timeline-item" id="tl-filter">
+                                <strong>🚫 Input Filtering</strong>
+                                <p>Only allowing numeric input</p>
+                            </div>
+                            <div class="timeline-item" id="tl-detect">
+                                <strong>🏷️ Card Type Detection</strong>
+                                <p>Detecting Visa, Mastercard, etc.</p>
+                            </div>
+                            <div class="timeline-item" id="tl-validate">
+                                <strong>✅ Luhn Validation</strong>
+                                <p>Real-time card number validation</p>
+                            </div>
+                            <div class="timeline-item" id="tl-advance">
+                                <strong>➡️ Auto-Advance</strong>
+                                <p>Moving to next field when complete</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card" style="margin:0;">
+                        <h3>📊 Live State</h3>
+                        <div class="code-block" style="font-size: 0.85rem;">
+                            <pre id="cc-state-display">{
+  cardNumber: "",
+  cardType: "unknown",
+  isValid: false,
+  name: "",
+  expiry: "",
+  cvv: ""
+}</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4: Pitfalls -->
+        <section id="pitfalls" class="section">
+            <div class="card">
+                <div class="card-header">
+                    <span class="emoji">⚠️</span>
+                    <h2>Common Pitfalls & Fixes</h2>
+                </div>
+
+                <!-- Pitfall 1 -->
+                <div class="pitfall-container">
+                    <span class="pitfall-label">❌ PITFALL #1</span>
+                    <h3 style="margin-top:1rem;">Controlled without onChange</h3>
+                    <p style="color: var(--text-secondary); margin: 1rem 0;">
+                        This creates a <strong>read-only input</strong> that ignores user keystrokes!
+                    </p>
+
+                    <div class="comparison-container">
+                        <div>
+                            <h4 style="color: var(--accent-danger);">❌ Wrong</h4>
+                            <div class="code-block">
+                                <span class="keyword">const</span> [value] = <span
+                                    class="function">useState</span>(<span class="string">"Hello"</span>);
+                                <span class="tag">&lt;</span><span class="component">input</span> <span
+                                    class="attr">value</span>=<span class="value">{value}</span> <span
+                                    class="tag">/&gt;</span>
+                                <span class="comment">// User can't type anything!</span>
+                            </div>
+                            <div style="margin-top:1rem;">
+                                <label>Try typing (it's stuck!):</label>
+                                <input type="text" class="form-input" id="pitfall1-wrong" value="Hello"
+                                    oninput="this.value='Hello'" style="margin-top:0.5rem;">
+                            </div>
+                        </div>
+                        <div>
+                            <h4 style="color: var(--accent-secondary);">✅ Fixed</h4>
+                            <div class="code-block">
+                                <span class="keyword">const</span> [value, setValue] = <span
+                                    class="function">useState</span>(<span class="string">"Hello"</span>);
+                                <span class="tag">&lt;</span><span class="component">input</span>
+                                <span class="attr">value</span>=<span class="value">{value}</span>
+                                <span class="attr">onChange</span>=<span class="value">{e =>
+                                    setValue(e.target.value)}</span>
+                                <span class="tag">/&gt;</span>
+                            </div>
+                            <div style="margin-top:1rem;">
+                                <label>Try typing (works!):</label>
+                                <input type="text" class="form-input" id="pitfall1-fixed" value="Hello"
+                                    style="margin-top:0.5rem;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pitfall 2 -->
+                <div class="pitfall-container" style="margin-top: 2rem;">
+                    <span class="pitfall-label">❌ PITFALL #2</span>
+                    <h3 style="margin-top:1rem;">Undefined Initial State</h3>
+                    <p style="color: var(--text-secondary); margin: 1rem 0;">
+                        Starting with <code>undefined</code> then setting a value switches from uncontrolled to
+                        controlled!
+                    </p>
+
+                    <div class="demo-area">
+                        <div class="btn-group">
+                            <button class="btn btn-danger" onclick="demoPitfall2()">
+                                ▶️ Trigger Warning
+                            </button>
+                            <button class="btn btn-secondary" onclick="resetPitfall2()">
+                                🔄 Reset
+                            </button>
+                        </div>
+                        <div id="pitfall2-demo">
+                            <p>Initial state: <code>undefined</code></p>
+                            <input type="text" class="form-input" id="pitfall2-input" style="margin-top:0.5rem;">
+                        </div>
+                        <div id="pitfall2-warning" style="display:none;margin-top:1rem;">
+                            <div class="highlight-box danger">
+                                <h4>⚠️ React Warning</h4>
+                                <p><em>A component is changing an uncontrolled input to be controlled.
+                                        This is likely caused by the value changing from undefined to a defined
+                                        value.</em></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="highlight-box success" style="margin-top:1rem;">
+                        <h4>✅ Fix: Always initialize with empty string</h4>
+                        <div class="code-block">
+                            <span class="keyword">const</span> [value, setValue] = <span
+                                class="function">useState</span>(<span class="string">''</span>); <span
+                                class="comment">// ✅ Not undefined!</span>
+                            <span class="comment">// OR with API data:</span>
+                            <span class="tag">&lt;</span><span class="component">input</span> <span
+                                class="attr">value</span>=<span class="value">{data?.name ?? ''}</span> <span
+                                class="tag">/&gt;</span> <span class="comment">// ✅ Fallback</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pitfall 3 -->
+                <div class="pitfall-container" style="margin-top: 2rem;">
+                    <span class="pitfall-label">❌ PITFALL #3</span>
+                    <h3 style="margin-top:1rem;">defaultValue Doesn't Update</h3>
+                    <p style="color: var(--text-secondary); margin: 1rem 0;">
+                        <code>defaultValue</code> only sets the <strong>initial</strong> value. Changing it later has no
+                        effect!
+                    </p>
+
+                    <div class="demo-area">
+                        <div class="btn-group">
+                            <button class="btn btn-danger" onclick="demoPitfall3()">
+                                ▶️ Try to Update defaultValue
+                            </button>
+                        </div>
+                        <div>
+                            <p>Current defaultValue prop: <span id="pitfall3-prop"
+                                    style="color:var(--accent-warning);">"Original"</span></p>
+                            <input type="text" class="form-input" id="pitfall3-input" style="margin-top:0.5rem;">
+                            <p style="margin-top:0.5rem;color:var(--text-secondary);">
+                                👆 Notice: Input stays the same even when defaultValue changes!
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="highlight-box success" style="margin-top:1rem;">
+                        <h4>✅ Fix: Use key prop to force remount</h4>
+                        <div class="code-block">
+                            <span class="comment">// When data changes, key forces new component instance</span>
+                            <span class="tag">&lt;</span><span class="component">input</span>
+                            <span class="attr">key</span>=<span class="value">{user.id}</span> <span class="comment">//
+                                ✅ New key = new component</span>
+                            <span class="attr">defaultValue</span>=<span class="value">{user.name}</span>
+                            <span class="tag">/&gt;</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <footer class="footer">
+            <p>🎮 Controlled vs Uncontrolled Components Visualizer</p>
+            <p style="margin-top: 0.5rem;">Part of the FAANG Interview Prep Series</p>
+        </footer>
+    </div>
+
+    <script>
+        // Navigation
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(sectionId).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // ============== SECTION 1: BASICS ==============
+        let controlledRenders = 0;
+        const controlledInput = document.getElementById('controlled-input');
+        const controlledState = document.getElementById('controlled-state');
+        const controlledLog = document.getElementById('controlled-log');
+        const controlledRenderCounter = document.getElementById('controlled-renders');
+
+        let controlledValue = '';
+
+        controlledInput.addEventListener('input', (e) => {
+            controlledValue = e.target.value;
+            controlledRenders++;
+
+            // Update state display
+            controlledState.textContent = `"${controlledValue}"`;
+
+            // Update render counter with animation
+            const counter = controlledRenderCounter.querySelector('.render-count');
+            counter.textContent = controlledRenders;
+            controlledRenderCounter.classList.remove('render-flash');
+            void controlledRenderCounter.offsetWidth;
+            controlledRenderCounter.classList.add('render-flash');
+
+            // Add log entry
+            const time = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            logEntry.innerHTML = `
+                <span class="log-time">${time}</span>
+                <span class="log-event">onChange →</span>
+                <span class="log-value">"${controlledValue}"</span>
+                <span style="color: var(--accent-warning);">🔄 Re-render #${controlledRenders}</span>
+            `;
+            controlledLog.insertBefore(logEntry, controlledLog.firstChild);
+        });
+
+        const uncontrolledLog = document.getElementById('uncontrolled-log');
+        const uncontrolledState = document.getElementById('uncontrolled-state');
+
+        function readUncontrolledValue() {
+            const input = document.getElementById('uncontrolled-input');
+            const value = input.value;
+            uncontrolledState.textContent = `"${value}"`;
+
+            const time = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            logEntry.innerHTML = `
+                <span class="log-time">${time}</span>
+                <span class="log-event">ref.current.value →</span>
+                <span class="log-value">"${value}"</span>
+                <span style="color: var(--accent-secondary);">✅ No re-render!</span>
+            `;
+            uncontrolledLog.insertBefore(logEntry, uncontrolledLog.firstChild);
+        }
+
+        // ============== SECTION 2: DATA FLOW ==============
+        const flowDemoInput = document.getElementById('flow-demo-input');
+        let flowState = 'Hello';
+        flowDemoInput.value = flowState;
+
+        flowDemoInput.addEventListener('input', (e) => {
+            flowState = e.target.value;
+            document.getElementById('flow-state-val').textContent = `"${flowState}"`;
+        });
+
+        async function animateControlledFlow() {
+            const elements = ['flow-state', 'flow-input', 'flow-onchange', 'flow-setstate'];
+
+            for (let el of elements) {
+                document.getElementById(el).classList.add('highlight');
+                await sleep(600);
+                document.getElementById(el).classList.remove('highlight');
+            }
+            document.getElementById('flow-state').classList.add('highlight');
+            await sleep(300);
+            document.getElementById('flow-state').classList.remove('highlight');
+        }
+
+        function resetControlledFlow() {
+            flowState = 'Hello';
+            flowDemoInput.value = flowState;
+            document.getElementById('flow-state-val').textContent = '"Hello"';
+        }
+
+        function readUncontrolledFlow() {
+            const input = document.getElementById('uflow-demo-input');
+            const refEl = document.getElementById('uflow-ref');
+            const refVal = document.getElementById('uflow-ref-val');
+
+            refVal.textContent = `"${input.value}"`;
+            refEl.classList.add('highlight');
+            setTimeout(() => refEl.classList.remove('highlight'), 800);
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // ============== SECTION 3: CREDIT CARD ==============
+        const ccInputNumber = document.getElementById('cc-input-number');
+        const ccInputName = document.getElementById('cc-input-name');
+        const ccInputExpiry = document.getElementById('cc-input-expiry');
+        const ccInputCvv = document.getElementById('cc-input-cvv');
+
+        let ccState = {
+            cardNumber: '',
+            cardType: 'unknown',
+            isValid: false,
+            name: '',
+            expiry: '',
+            cvv: ''
+        };
+
+        function getCardType(number) {
+            const cleaned = number.replace(/\s/g, '');
+            if (/^4/.test(cleaned)) return { type: 'visa', icon: '💙' };
+            if (/^5[1-5]/.test(cleaned)) return { type: 'mastercard', icon: '🔴' };
+            if (/^3[47]/.test(cleaned)) return { type: 'amex', icon: '💚' };
+            if (/^6/.test(cleaned)) return { type: 'discover', icon: '🟠' };
+            return { type: 'unknown', icon: '💳' };
+        }
+
+        function isValidLuhn(number) {
+            const cleaned = number.replace(/\s/g, '');
+            if (!/^\d+$/.test(cleaned) || cleaned.length < 13) return false;
+
+            let sum = 0;
+            let isEven = false;
+
+            for (let i = cleaned.length - 1; i >= 0; i--) {
+                let digit = parseInt(cleaned[i]);
+                if (isEven) {
+                    digit *= 2;
+                    if (digit > 9) digit -= 9;
+                }
+                sum += digit;
+                isEven = !isEven;
+            }
+            return sum % 10 === 0;
+        }
+
+        function formatCardNumber(value) {
+            const cleaned = value.replace(/\D/g, '');
+            const limited = cleaned.slice(0, 16);
+            return limited.replace(/(\d{4})(?=\d)/g, '$1 ');
+        }
+
+        function updateCCDisplay() {
+            document.getElementById('cc-number').textContent =
+                ccState.cardNumber || '•••• •••• •••• ••••';
+            document.getElementById('cc-name').textContent =
+                ccState.name.toUpperCase() || 'YOUR NAME';
+            document.getElementById('cc-expiry').textContent =
+                ccState.expiry || 'MM/YY';
+            document.getElementById('cc-type').textContent =
+                getCardType(ccState.cardNumber).icon;
+
+            const validation = document.getElementById('cc-number-validation');
+            if (ccState.cardNumber.replace(/\s/g, '').length >= 13) {
+                if (ccState.isValid) {
+                    validation.className = 'validation-msg success';
+                    validation.innerHTML = '✅ Valid card number';
+                    ccInputNumber.classList.add('valid');
+                    ccInputNumber.classList.remove('invalid');
+                } else {
+                    validation.className = 'validation-msg error';
+                    validation.innerHTML = '❌ Invalid card number';
+                    ccInputNumber.classList.add('invalid');
+                    ccInputNumber.classList.remove('valid');
+                }
+            } else {
+                validation.innerHTML = '';
+                ccInputNumber.classList.remove('valid', 'invalid');
+            }
+
+            document.getElementById('cc-state-display').textContent = JSON.stringify(ccState, null, 2);
+        }
+
+        function activateTimelineItem(id) {
+            document.querySelectorAll('.timeline-item').forEach(t => t.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        ccInputNumber.addEventListener('input', (e) => {
+            activateTimelineItem('tl-filter');
+            setTimeout(() => activateTimelineItem('tl-format'), 100);
+
+            const formatted = formatCardNumber(e.target.value);
+            e.target.value = formatted;
+            ccState.cardNumber = formatted;
+
+            setTimeout(() => activateTimelineItem('tl-detect'), 200);
+            ccState.cardType = getCardType(formatted).type;
+
+            setTimeout(() => activateTimelineItem('tl-validate'), 300);
+            ccState.isValid = isValidLuhn(formatted);
+
+            updateCCDisplay();
+
+            // Auto-advance
+            if (formatted.replace(/\s/g, '').length === 16) {
+                setTimeout(() => {
+                    activateTimelineItem('tl-advance');
+                    ccInputName.focus();
+                }, 400);
+            }
+        });
+
+        ccInputName.addEventListener('input', (e) => {
+            ccState.name = e.target.value;
+            updateCCDisplay();
+        });
+
+        ccInputExpiry.addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length >= 2) {
+                value = value.slice(0, 2) + '/' + value.slice(2, 4);
+            }
+            e.target.value = value;
+            ccState.expiry = value;
+            updateCCDisplay();
+
+            if (value.length === 5) {
+                ccInputCvv.focus();
+            }
+        });
+
+        ccInputCvv.addEventListener('input', (e) => {
+            const cleaned = e.target.value.replace(/\D/g, '').slice(0, 4);
+            e.target.value = cleaned;
+            ccState.cvv = cleaned;
+            updateCCDisplay();
+        });
+
+        // ============== SECTION 4: PITFALLS ==============
+        document.getElementById('pitfall1-fixed').addEventListener('input', function (e) {
+            // This one works normally
+        });
+
+        let pitfall2State;
+        function demoPitfall2() {
+            const input = document.getElementById('pitfall2-input');
+            pitfall2State = 'Now Defined!';
+            input.value = pitfall2State;
+            document.getElementById('pitfall2-warning').style.display = 'block';
+        }
+
+        function resetPitfall2() {
+            pitfall2State = undefined;
+            document.getElementById('pitfall2-input').value = '';
+            document.getElementById('pitfall2-warning').style.display = 'none';
+        }
+
+        let pitfall3DefaultValue = 'Original';
+        document.getElementById('pitfall3-input').value = pitfall3DefaultValue;
+
+        function demoPitfall3() {
+            pitfall3DefaultValue = 'Updated Value!';
+            document.getElementById('pitfall3-prop').textContent = `"${pitfall3DefaultValue}"`;
+            // Notice: The input doesn't change!
+            // We're simulating React's defaultValue behavior
+        }
+    </script>
+</body>
+
+</html>
